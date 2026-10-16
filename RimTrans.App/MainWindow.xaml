@@ -127,41 +127,44 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
-                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                                      Margin="8,4,0,4"
-                                                      VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                      TextBlock.Foreground="{StaticResource TextMain}"/>
-                                    <Path Grid.Column="1" Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource TextSub}"
-                                          StrokeThickness="1.5" Fill="Transparent" Margin="0,0,8,0"
-                                          VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
+                            <ToggleButton x:Name="toggle" Focusable="False" ClickMode="Press" Panel.ZIndex="0"
+                                          Background="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                          BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5">
+                                            <Path Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource TextSub}"
+                                                  StrokeThickness="1.5" Fill="Transparent" HorizontalAlignment="Right"
+                                                  Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBg}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="9,5,26,5" IsHitTestVisible="False"
+                                              VerticalAlignment="Center" HorizontalAlignment="Left"
+                                              TextBlock.Foreground="{StaticResource TextMain}"/>
                             <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                    AllowsTransparency="True" PopupAnimation="Slide" StaysOpen="False">
                                 <Border Background="#F2EBDA" BorderBrush="{StaticResource Border}" BorderThickness="1"
                                         CornerRadius="5" Margin="0,4,0,0" MinWidth="{TemplateBinding ActualWidth}"
-                                        TextBlock.Foreground="{StaticResource TextMain}"
-                                        >
+                                        TextBlock.Foreground="{StaticResource TextMain}">
                                     <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
                                         <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                                     </ScrollViewer>
                                 </Border>
                             </Popup>
                         </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
