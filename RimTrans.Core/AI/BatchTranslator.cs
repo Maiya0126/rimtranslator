@@ -39,20 +39,26 @@ namespace RimTrans.Core.AI
             IProgress<(int done, int total, string stage)>? progress = null)
         {
             int done = 0;
-            // 1. 术语回填
+            // 1. 术语回填（自定义词库 > 云端 defName 官方词库）
             var pending = new List<TranslationItem>();
             foreach (var item in items)
             {
-                if (glossary != null && glossary.TryMatch(item.Source, out var hit))
+                bool hit = false;
+                if (glossary != null && glossary.TryMatch(item.Source, out var g))
                 {
-                    item.GlossaryTranslation = hit;
-                    item.Final = hit;
+                    item.GlossaryTranslation = g;
+                    item.Final = g;
                     item.Status = "glossary";
+                    hit = true;
                 }
-                else
+                else if (CloudGlossary.Loaded && CloudGlossary.TryMatch(item.Source, out var cloud))
                 {
-                    pending.Add(item);
+                    item.GlossaryTranslation = cloud + "（云端词库）";
+                    item.Final = cloud;
+                    item.Status = "glossary";
+                    hit = true;
                 }
+                if (!hit) pending.Add(item);
                 done++;
                 progress?.Report((done, items.Count, "术语匹配"));
             }
@@ -109,17 +115,25 @@ namespace RimTrans.Core.AI
 
         private string BuildBatchPrompt(List<TranslationItem> items, Glossary? glossary)
         {
-            var terms = new List<string>();
+            var terms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (glossary != null)
             {
                 foreach (var item in items)
                     foreach (var word in ExtractWords(item.Source))
                         if (glossary.TryMatch(word, out var t))
-                            terms.Add($"{word}={t}");
+                            terms[word] = t;
+            }
+            // 云端官方词库：defName 形态的词（如 CamelCase）也作为约束
+            if (CloudGlossary.Loaded)
+            {
+                foreach (var item in items)
+                    foreach (var word in ExtractWords(item.Source))
+                        if (CloudGlossary.TryMatch(word, out var z))
+                            terms.TryAdd(word, z);
             }
             string glossarySection = terms.Count == 0
                 ? "\nNo glossary hits. Translate using established official RimWorld terminology for the target language."
-                : "\nGlossary (MUST follow exactly):\n" + string.Join("\n", terms.Distinct().Take(80));
+                : "\nGlossary (MUST follow exactly):\n" + string.Join("\n", terms.Take(80).Select(kv => $"{kv.Key}={kv.Value}"));
 
             var arr = items.Select(i => JsonSerializer.Serialize(new { id = i.Id, text = i.Source }));
             return $"Translate each text into {_targetLanguage}. " +

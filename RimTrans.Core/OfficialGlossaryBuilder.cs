@@ -26,6 +26,7 @@ namespace RimTrans.Core
 
                 string? targetDir = FindLanguageDir(languagesDir, language);
                 string? englishDir = FindLanguageDir(languagesDir, "English");
+                if (targetDir == null || englishDir == null) continue;
 
                 foreach (var (relPath, content) in EnumerateLanguageFiles(targetDir))
                 {
@@ -51,10 +52,12 @@ namespace RimTrans.Core
                 {
                     if (n.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
                     {
+                        // tar 本身可直接读取；优先已解压目录
                         string extracted = entry[..^4];
                         if (Directory.Exists(extracted)) return extracted;
+                        return entry; // 直接返回 tar 路径，EnumerateTar 会解析
                     }
-                    else if (Directory.Exists(entry))
+                    if (Directory.Exists(entry))
                     {
                         return entry;
                     }
@@ -93,7 +96,30 @@ namespace RimTrans.Core
         private static string? ReadCounterpart(string englishDir, string relPath)
         {
             string p = Path.Combine(englishDir, relPath);
+            if (englishDir.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
+            {
+                return ReadTarEntry(englishDir, relPath.Replace('\\', '/'));
+            }
             if (File.Exists(p)) return File.ReadAllText(p, Encoding.UTF8);
+            return null;
+        }
+
+        private static string? ReadTarEntry(string tarPath, string relPath)
+        {
+            using var fs = File.OpenRead(tarPath);
+            using var tr = new TarReader(fs);
+            while (tr.GetNextEntry() is { } e)
+            {
+                if (e.EntryType != TarEntryType.RegularFile) continue;
+                string name = e.Name.StartsWith("Languages/", StringComparison.OrdinalIgnoreCase)
+                    ? e.Name["Languages/".Length..]
+                    : e.Name;
+                if (name.Equals(relPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    using var sr = new StreamReader(e.DataStream!, Encoding.UTF8);
+                    return sr.ReadToEnd();
+                }
+            }
             return null;
         }
 
@@ -114,7 +140,9 @@ namespace RimTrans.Core
                     string key = el.Name.ToString();
                     string en = el.Value.Trim();
                     if (en.Length == 0 || en == "TODO" || en.Length > 200) continue;
-                    if (tgt.TryGetValue(key, out var tr) && !string.IsNullOrWhiteSpace(tr) && tr != "TODO" && tr.Length <= 300)
+                    if (en.Length < 2 || en == "-" || en == "," || en == "x") continue;
+                    if (en.EndsWith(",") || en.EndsWith(":") || en.StartsWith("(") && en.EndsWith(")")) continue;
+                    if (tgt.TryGetValue(key, out var tr) && !string.IsNullOrWhiteSpace(tr) && tr != "TODO" && tr.Length <= 300 && tr != en)
                         map.TryAdd(en, tr);
                 }
             }

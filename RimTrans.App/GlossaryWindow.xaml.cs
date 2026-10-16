@@ -106,5 +106,40 @@ namespace RimTrans.App
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
+
+        private async void BtnCloudRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            BtnCloudRefresh.IsEnabled = false;
+            TxtCloudStat.Text = "拉取中…";
+            try
+            {
+                var (count, msg) = await Task.Run(() => CloudGlossary.FetchAsync(force: true));
+                TxtCloudStat.Text = $"{msg}：{count} 条（缓存于 {CloudGlossary.CachedAt:MM-dd HH:mm}）";
+                ApplyCloudFilter();
+            }
+            catch (Exception ex)
+            {
+                TxtCloudStat.Text = "拉取失败：" + ex.Message + "（无网时翻译会自动用上次缓存）";
+            }
+            finally
+            {
+                BtnCloudRefresh.IsEnabled = true;
+            }
+        }
+
+        private void TxtCloudSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (CloudGlossary.Loaded) ApplyCloudFilter();
+        }
+
+        private void ApplyCloudFilter()
+        {
+            string q = TxtCloudSearch.Text?.Trim() ?? "";
+            IEnumerable<KeyValuePair<string, string>> query = CloudGlossary.Map;
+            if (q.Length > 0)
+                query = query.Where(kv => kv.Key.Contains(q, StringComparison.OrdinalIgnoreCase)
+                    || kv.Value.Contains(q, StringComparison.OrdinalIgnoreCase));
+            GridCloud.ItemsSource = query.Take(300).ToList();
+        }
     }
 }

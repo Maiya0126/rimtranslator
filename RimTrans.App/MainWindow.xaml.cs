@@ -22,8 +22,24 @@ namespace RimTrans.App
         public MainWindow()
         {
             InitializeComponent();
+            _uiReady = true;
             LoadUiFromSettings();
             Log("边缘译者 RimTranslator 已启动。点击「刷新列表」扫描 Mod。");
+            _ = WarmCloudGlossaryAsync();
+        }
+
+        private async Task WarmCloudGlossaryAsync()
+        {
+            try
+            {
+                var (count, msg) = await Task.Run(() => CloudGlossary.FetchAsync());
+                if (count > 0)
+                    Log($"☁️ 云端词库{msg}：{count} 条（defName→中文，翻译时自动生效）");
+            }
+            catch
+            {
+                Log("☁️ 云端词库未拉取（无网或首次），翻译时会自动重试。");
+            }
         }
 
         internal static readonly Dictionary<string, string> LanguageNames = new()
@@ -133,26 +149,43 @@ namespace RimTrans.App
 
         private static readonly string[] TranslationModKeywords =
         {
-            "汉化", "簡體", "简体", "繁體", "繁体", "chinese", "translation", "translate", "中文",
-            "日化", "韩化", "韓化", "localization", "localisation", "简繁", "语言包", "translate_",
+            "汉化", "漢化", "簡體", "简体", "繁體", "繁体", "中文", "简繁", "语言包",
+            "日化", "韩化", "韓化", "chinese", "translation", "translate",
         };
 
         private static bool LooksLikeTranslationMod(ModInfo m)
         {
-            if (m.PackageId.EndsWith(".zh", StringComparison.OrdinalIgnoreCase)
-                || m.PackageId.EndsWith(".zh-cn", StringComparison.OrdinalIgnoreCase)
-                || m.PackageId.EndsWith(".cn", StringComparison.OrdinalIgnoreCase)
-                || m.PackageId.Contains("translation", StringComparison.OrdinalIgnoreCase)
-                || m.PackageId.Contains("chinese", StringComparison.OrdinalIgnoreCase))
+            string pkg = m.PackageId.ToLowerInvariant();
+            // 包ID：ZH 前缀（社区翻译包惯例）/ 各语言后缀
+            if (pkg.StartsWith("zh.") || pkg.StartsWith("zh-") || pkg.StartsWith("zh_") ||
+                pkg.EndsWith(".zh") || pkg.EndsWith(".zh-cn") || pkg.EndsWith(".cn") || pkg.EndsWith(".ja") ||
+                pkg.EndsWith(".ko") || pkg.EndsWith(".ru") || pkg.EndsWith(".chs") ||
+                pkg.EndsWith("-zh") || pkg.EndsWith("_zh") || pkg.EndsWith("-chinese") || pkg.EndsWith("_chinese") ||
+                pkg.EndsWith(".zh.hc") || pkg.EndsWith(".translation") || pkg.Contains("chinesepack") ||
+                pkg.Contains("chinesetranslation") || pkg.Contains("chtrans") || pkg.EndsWith(".moujia.cn"))
                 return true;
-            string name = m.Name;
+            // 名称：含 _zh / -zh / 汉化 字样，或以翻译关键词开头/结尾
+            string name = m.Name.Trim();
+            if (name.Contains("_zh", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("-zh", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("汉化") || name.Contains("漢化")
+                || name.Contains("简繁", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("簡繁", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("中文", StringComparison.OrdinalIgnoreCase))
+                return true;
             foreach (var kw in TranslationModKeywords)
-                if (name.Contains(kw, StringComparison.OrdinalIgnoreCase)) return true;
+            {
+                if (name.StartsWith(kw, StringComparison.OrdinalIgnoreCase) || name.EndsWith(kw, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
             return false;
         }
 
+        private bool _uiReady;
+
         private void ApplyFilter()
         {
+            if (!_uiReady || TxtSearch == null || GridMods == null || TxtCount == null) return;
             string q = TxtSearch.Text?.Trim() ?? "";
             IEnumerable<ModInfo> query = _allMods;
             if (ChkHideTranslation.IsChecked == true)

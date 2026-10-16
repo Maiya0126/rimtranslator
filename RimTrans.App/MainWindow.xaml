@@ -1,28 +1,31 @@
-﻿<Window x:Class="RimTrans.App.MainWindow"
+<Window x:Class="RimTrans.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="边缘译者 RimTranslator — RimWorld 翻译提取工具" Height="850" Width="1240"
         Icon="icon.ico"
         WindowStartupLocation="CenterScreen"
-        Background="#0F172A"
+        Background="#E8E0CE"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display">
     <Window.Resources>
-        <!-- ═══ RimTranslator 深色主题（slate 深空 + 绿色行动色，游戏工具风）═══ -->
-        <SolidColorBrush x:Key="Bg" Color="#0F172A"/>
-        <SolidColorBrush x:Key="Panel" Color="#1E293B"/>
-        <SolidColorBrush x:Key="PanelLight" Color="#334155"/>
-        <SolidColorBrush x:Key="Border" Color="#334155"/>
-        <SolidColorBrush x:Key="TextMain" Color="#F1F5F9"/>
-        <SolidColorBrush x:Key="TextSub" Color="#94A3B8"/>
-        <SolidColorBrush x:Key="Accent" Color="#22C55E"/>
-        <SolidColorBrush x:Key="AccentDark" Color="#16A34A"/>
-        <SolidColorBrush x:Key="Info" Color="#38BDF8"/>
-        <SolidColorBrush x:Key="Warn" Color="#FBBF24"/>
+        <!-- ═══ 浅暖主题：米白纸面 + RimWorld 泥土橙 + 森林绿（解决深色下拉可读性）═══ -->
+        <SolidColorBrush x:Key="Bg" Color="#E8E0CE"/>
+        <SolidColorBrush x:Key="Panel" Color="#F2EBDA"/>
+        <SolidColorBrush x:Key="PanelLight" Color="#DCD2B8"/>
+        <SolidColorBrush x:Key="Border" Color="#B8AA88"/>
+        <SolidColorBrush x:Key="TextMain" Color="#3B3226"/>
+        <SolidColorBrush x:Key="TextSub" Color="#7A6E58"/>
+        <SolidColorBrush x:Key="Accent" Color="#8C4A1F"/>
+        <SolidColorBrush x:Key="AccentBg" Color="#EAD9C2"/>
+        <SolidColorBrush x:Key="Action" Color="#5E6B3C"/>
+        <SolidColorBrush x:Key="ActionBg" Color="#DDE3C8"/>
+        <SolidColorBrush x:Key="Info" Color="#2563EB"/>
+        <SolidColorBrush x:Key="Warn" Color="#B45309"/>
+        <SolidColorBrush x:Key="Pink" Color="#BE3455"/>
 
         <Style TargetType="Button">
             <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
-            <Setter Property="Background" Value="{StaticResource PanelLight}"/>
+            <Setter Property="Background" Value="{StaticResource Panel}"/>
             <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
             <Setter Property="Padding" Value="12,5"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
@@ -31,18 +34,44 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="1" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#475569"/>
-                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBg}"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5"/>
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}" CornerRadius="4" Margin="3,1">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBg}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBg}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -66,32 +95,85 @@
 
         <Style TargetType="TextBox">
             <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
-            <Setter Property="Background" Value="#0B1120"/>
+            <Setter Property="Background" Value="#F2EBDA"/>
             <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextMain}"/>
-            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="Padding" Value="6,3"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style TargetType="ComboBox">
             <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
-            <Setter Property="Background" Value="{StaticResource PanelLight}"/>
+            <Setter Property="Background" Value="#F2EBDA"/>
             <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
             <Setter Property="Padding" Value="6,3"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter ContentSource="SelectionBox" Margin="8,3,0,3"
+                                                      VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                    <Path Grid.Column="1" Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource TextSub}"
+                                          StrokeThickness="1.5" Fill="None" Margin="0,0,8,0"
+                                          VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
+                                   AllowsTransparency="True" PopupAnimation="Slide" StaysOpen="False">
+                                <Border Background="#F2EBDA" BorderBrush="{StaticResource Border}" BorderThickness="1"
+                                        CornerRadius="5" Margin="0,4,0,0" MinWidth="{TemplateBinding ActualWidth}"
+                                        TextBlock.Foreground="{StaticResource TextMain}"
+                                        TextBlock.Background="Transparent">
+                                    <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
+                                        <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style TargetType="DataGrid">
             <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
             <Setter Property="Background" Value="{StaticResource Panel}"/>
-            <Setter Property="RowBackground" Value="{StaticResource Panel}"/>
-            <Setter Property="AlternatingRowBackground" Value="#243247"/>
+            <Setter Property="RowBackground" Value="#F2EBDA"/>
+                        <Setter Property="AlternatingRowBackground" Value="#EAE2CF"/>
             <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
             <Setter Property="GridLinesVisibility" Value="None"/>
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#182334"/>
+            <Setter Property="Background" Value="{StaticResource PanelLight}"/>
             <Setter Property="Foreground" Value="{StaticResource Accent}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Padding" Value="8,6"/>
@@ -100,8 +182,8 @@
         </Style>
 
         <Style TargetType="ProgressBar">
-            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
-            <Setter Property="Background" Value="#0B1120"/>
+            <Setter Property="Foreground" Value="{StaticResource Action}"/>
+            <Setter Property="Background" Value="{StaticResource PanelLight}"/>
             <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
             <Setter Property="Height" Value="16"/>
         </Style>
@@ -109,9 +191,9 @@
         <Style x:Key="GroupBorder" TargetType="Border">
             <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
-            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Padding" Value="14,10"/>
             <Setter Property="Background" Value="{StaticResource Panel}"/>
         </Style>
 
@@ -129,7 +211,6 @@
         </Style>
 
         <Style TargetType="Hyperlink">
-            <Setter Property="Foreground" Value="{StaticResource Info}"/>
             <Setter Property="TextDecorations" Value="None"/>
         </Style>
     </Window.Resources>
@@ -157,7 +238,8 @@
                     <CheckBox x:Name="ChkCustom" Content="自定义" IsChecked="True"/>
                     <Button x:Name="BtnAddSource" Content="＋ 添加目录…" Margin="8,0,0,0" Click="BtnAddSource_Click"/>
                     <Button x:Name="BtnScan" Content="⟳ 刷新列表" FontWeight="Bold" Margin="8,0,0,0"
-                            Background="#14532D" BorderBrush="{StaticResource Accent}" Click="BtnScan_Click"/>
+                            Background="{StaticResource ActionBg}" BorderBrush="{StaticResource Action}"
+                            Foreground="{StaticResource Action}" Click="BtnScan_Click"/>
 
                     <TextBlock Text="游戏版本" Style="{StaticResource FieldLabel}" FontWeight="Bold"/>
                     <ComboBox x:Name="CmbVersion" Width="72" SelectionChanged="CmbVersion_SelectionChanged"/>
@@ -188,11 +270,12 @@
                              ToolTip="支持名称 / 包ID / 工坊ID 模糊搜索"/>
                     <CheckBox x:Name="ChkHideTranslation" Grid.Column="2" Content="隐藏翻译Mod" IsChecked="True"
                               Margin="12,0,0,0" Checked="ChkHideTranslation_Changed" Unchecked="ChkHideTranslation_Changed"
-                              ToolTip="按名称关键词过滤掉翻译/汉化类 Mod（如 汉化/Chinese/Translation/简体/繁体/日化/韩化）"/>
+                              ToolTip="过滤名称以 汉化/Chinese/Translation 等开头或结尾的纯翻译包；功能 Mod 不受影响"/>
                     <TextBlock x:Name="TxtCount" Grid.Column="3" Text="先点上方「刷新列表」" Foreground="{StaticResource TextSub}"
                                FontStyle="Italic" Margin="12,0,8,0" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     <Button x:Name="BtnExtract" Grid.Column="4" Content="▶ 提取" Padding="24,6" FontWeight="Bold"
-                            Background="#14532D" BorderBrush="{StaticResource Accent}" Click="BtnExtract_Click"
+                            Background="{StaticResource ActionBg}" BorderBrush="{StaticResource Action}"
+                            Foreground="{StaticResource Action}" Click="BtnExtract_Click"
                             ToolTip="提取 Keyed + DefInjected 待翻译文本（不做 AI 翻译）。也可右键列表。"/>
                 </Grid>
                 <DataGrid x:Name="GridMods" SelectionMode="Extended" SelectionUnit="FullRow"
@@ -201,7 +284,7 @@
                           EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
                           RowHeight="40">
                     <DataGrid.ContextMenu>
-                        <ContextMenu Background="{StaticResource Panel}" Foreground="{StaticResource TextMain}">
+                        <ContextMenu Background="#F2EBDA" Foreground="{StaticResource TextMain}">
                             <MenuItem Header="提取（不做AI）" Click="BtnExtract_Click" FontWeight="Bold"/>
                             <MenuItem Header="翻译（提取 → 术语回填 → AI → 审阅）" Click="MenuTranslate_Click"/>
                             <MenuItem Header="翻译并生成独立汉化Mod" Click="MenuTranslateSkeleton_Click"/>
@@ -224,7 +307,8 @@
                         <DataGridTemplateColumn Header="封面" Width="66" CanUserResize="False" CanUserReorder="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border CornerRadius="3" ClipToBounds="True" Margin="2,1" Width="62" Height="36">
+                                    <Border CornerRadius="3" ClipToBounds="True" Margin="2,1" Width="62" Height="36"
+                                            Background="{StaticResource PanelLight}">
                                         <Image Source="{Binding Preview}" Stretch="UniformToFill"
                                                RenderOptions.BitmapScalingMode="LowQuality"/>
                                     </Border>
@@ -301,41 +385,44 @@
                 </Grid>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                     <TextBlock x:Name="TxtProgress" Text="就绪" VerticalAlignment="Center" FontWeight="Bold"
-                               MinWidth="440" Foreground="{StaticResource Accent}"/>
+                               MinWidth="440" Foreground="{StaticResource Action}"/>
                     <ProgressBar x:Name="Progress" Width="430" Minimum="0" Maximum="100" Value="0"/>
                 </StackPanel>
-                <Border BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="3" Height="130" Background="#0B1120">
+                <Border BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="5" Height="130" Background="#3B3226">
                     <TextBox x:Name="TxtLog" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                              FontFamily="Cascadia Mono" FontSize="12" Background="Transparent"
-                             Foreground="#A7D7B8" BorderThickness="0" Padding="6"/>
+                             Foreground="#D8C9A3" BorderThickness="0" Padding="8"/>
                 </Border>
             </StackPanel>
         </Border>
 
-        <!-- ═══ 底部链接栏 ═══ -->
-        <Border Grid.Row="5" Background="#182334" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0"
-                CornerRadius="0,0,6,6" Padding="12,6" Margin="0">
+        <!-- ═══ 底部链接栏（每类链接独立配色）═══ -->
+        <Border Grid.Row="5" Background="{StaticResource PanelLight}" BorderBrush="{StaticResource Border}"
+                BorderThickness="0,1,0,0" CornerRadius="0" Padding="12,6">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="边缘译者 RimTranslator v1.0" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
-                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand">
-                    <Hyperlink NavigateUri="https://github.com/maiya026/rimtranslator" RequestNavigate="Link_RequestNavigate">⭐ GitHub 开源</Hyperlink>
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" ToolTip="开源仓库：源码 / Issue / Releases">
+                    <Hyperlink NavigateUri="https://github.com/maiya026/rimtranslator" RequestNavigate="Link_RequestNavigate"
+                               Foreground="#24292F">⭐ GitHub 开源</Hyperlink>
                 </TextBlock>
-                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" ToolTip="支持作者，喝杯奶茶">
                     <Hyperlink NavigateUri="https://afdian.com/a/maiya0126" RequestNavigate="Link_RequestNavigate"
-                               Foreground="#F472B6">💖 爱发电支持作者</Hyperlink>
+                               Foreground="{StaticResource Pink}">💖 爱发电支持作者</Hyperlink>
                 </TextBlock>
                 <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" MouseLeftButtonDown="QQGroup_Click"
-                           ToolTip="点击复制群号：1568455">
-                    <Run Text="👥 QQ群 1568455" Foreground="{StaticResource Info}"/>
+                           ToolTip="点击复制群号：1568455" Foreground="#07C160" FontWeight="Bold">
+                    <Run Text="👥 QQ群 1568455"/>
                 </TextBlock>
-                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand"
+                           ToolTip="本工具提取逻辑基于该模组对齐实现，感谢原作者 HaiLuan">
                     <Hyperlink NavigateUri="https://steamcommunity.com/sharedfiles/filedetails/?id=3026452122" RequestNavigate="Link_RequestNavigate"
-                               ToolTip="本工具提取逻辑基于该模组对齐实现，感谢原作者 HaiLuan">🙏 致谢 Extract translation</Hyperlink>
+                               Foreground="{StaticResource Accent}">🙏 致谢 Extract translation</Hyperlink>
                 </TextBlock>
-                <TextBlock VerticalAlignment="Center" Cursor="Hand">
-                    <Hyperlink NavigateUri="checkupdate" RequestNavigate="Link_RequestNavigate">⟳ 检查更新</Hyperlink>
+                <TextBlock VerticalAlignment="Center" Cursor="Hand" ToolTip="对比 GitHub Releases 版本">
+                    <Hyperlink NavigateUri="checkupdate" RequestNavigate="Link_RequestNavigate"
+                               Foreground="{StaticResource Info}">⟳ 检查更新</Hyperlink>
                 </TextBlock>
-                <TextBlock Text="API 密钥仅存本机，不上传不回传" VerticalAlignment="Center" Foreground="#64748B"
+                <TextBlock Text="API 密钥仅存本机，不上传不回传" VerticalAlignment="Center" Foreground="{StaticResource TextSub}"
                            FontStyle="Italic" Margin="18,0,0,0"
                            ToolTip="隐私承诺：密钥只保存在你电脑的 %APPDATA%\RimTrans\settings.json，开发者无法读取"/>
             </StackPanel>
