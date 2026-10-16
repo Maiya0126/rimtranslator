@@ -34,7 +34,7 @@
 
 ## 支持
 
-- GitHub：https://github.com/maiya026/rimtranslator（开源仓库，Issue 反馈）
+- GitHub：https://github.com/Maiya0126/rimtranslator（开源仓库，Issue 反馈）
 - QQ 群：**1568455**（使用帮助、汉化交流、最新消息）
 - 网盘下载：（发布时公布）
 - 爱发电：https://afdian.com/a/maiya0126 —— 如果工具帮到了你，欢迎请作者喝杯奶茶

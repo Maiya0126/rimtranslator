@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -648,7 +648,7 @@ namespace RimTrans.App
                 // 更新源：GitHub Releases latest API（仓库发布后启用）
                 using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 http.DefaultRequestHeaders.Add("User-Agent", "RimTranslator");
-                var resp = await http.GetAsync("https://api.github.com/repos/maiya026/rimtranslator/releases/latest");
+                var resp = await http.GetAsync("https://api.github.com/repos/Maiya0126/rimtranslator/releases/latest");
                 if (resp.IsSuccessStatusCode)
                 {
                     var json = await resp.Content.ReadAsStringAsync();
