@@ -134,10 +134,14 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <ContentPresenter ContentSource="SelectionBox" Margin="8,3,0,3"
-                                                      VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                      Margin="8,4,0,4"
+                                                      VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                      TextBlock.Foreground="{StaticResource TextMain}"/>
                                     <Path Grid.Column="1" Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource TextSub}"
-                                          StrokeThickness="1.5" Fill="None" Margin="0,0,8,0"
+                                          StrokeThickness="1.5" Fill="Transparent" Margin="0,0,8,0"
                                           VerticalAlignment="Center"/>
                                 </Grid>
                             </Border>
