@@ -26,11 +26,11 @@
 - RimWorld 本体源码中的 `Verse.TranslationFilesCleaner` / `XmlInheritance` 等逻辑作为字段遍历与继承合并的规则依据
 - Player2 本地服务集成参考 RimTuber 的实现
 
-## 已知限制（V1.0）
+## 已知限制
 
-- 不解析 PatchOperation 补丁动态产生的文本（约覆盖 90% 的 Mod，V1.1 计划支持 Add/Replace/Insert）
-- 跨 Mod 继承（ParentName 指向其他 Mod 的抽象节点）的 Def 暂无法解析（V1.1 计划支持依赖链解析）
-- 代码动态生成的 Def 离线抓不到（离线方案固有边界）
+- ✅ PatchOperation：V1.1 起支持 Add / Replace / Insert / Remove 四操作（覆盖绝大多数社区补丁；FindMod/Sequence/Conditional 等少数派操作暂不支持）
+- ✅ 跨 Mod 继承：V1.1 起支持通过 About 依赖声明解析其他 Mod 的抽象节点（依赖需已安装）
+- 代码动态生成的 Def 离线抓不到（离线方案固有边界，永久声明）
 
 ## 支持
 

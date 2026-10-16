@@ -319,7 +319,11 @@ namespace RimTrans.App
                     SetProgress($"提取：{mod.Name}", 5);
                     var keyedResult = await Task.Run(() => KeyedExtractor.Extract(mod, options, LoadExisting(mod, options), logger));
                     var defDirs = mod.GetContentDirs(options.GameVersion);
-                    var defs = await Task.Run(() => XmlInheritanceMerger.LoadAndMerge(defDirs, mod.PackageId, msg => logger.Warn(msg)));
+                    var patchDirs = ExtractContext.GetPatchDirs(mod, options.GameVersion);
+                    if (patchDirs.Count > 0) Log($"  发现 {patchDirs.Count} 个 Patches 目录，应用补丁…");
+                    var depDirs = ExtractContext.GetDependencyDefDirs(mod, _allMods.Select(r => r), options.GameVersion, msg => Log("  " + msg));
+                    var defs = await Task.Run(() => XmlInheritanceMerger.LoadAndMerge(defDirs, mod.PackageId, msg => logger.Warn(msg),
+                        extraDefDirs: depDirs.Count > 0 ? depDirs : null, patchDirs: patchDirs.Count > 0 ? patchDirs : null));
                     var defExisting = await Task.Run(() =>
                     {
                         var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -455,8 +459,12 @@ namespace RimTrans.App
                     Log($"  Keyed 完成：写入 {result.FilesWritten} 个文件，共 {result.KeysTotal} 键（回填 {result.KeysBackfilled}，TODO {result.KeysTodo}，UNUSED 归并 {result.KeysUnused}）");
 
                     var defDirs = mod.GetContentDirs(options.GameVersion);
+                    var patchDirs2 = ExtractContext.GetPatchDirs(mod, options.GameVersion);
+                    if (patchDirs2.Count > 0) Log($"  发现 {patchDirs2.Count} 个 Patches 目录，应用补丁…");
+                    var depDirs2 = ExtractContext.GetDependencyDefDirs(mod, _allMods, options.GameVersion, msg => Log("  " + msg));
                     var defs = await Task.Run(() => XmlInheritanceMerger.LoadAndMerge(defDirs, mod.PackageId,
-                        msg => logger.Warn(msg)));
+                        msg => logger.Warn(msg),
+                        extraDefDirs: depDirs2.Count > 0 ? depDirs2 : null, patchDirs: patchDirs2.Count > 0 ? patchDirs2 : null));
                     Log($"  Def 解析：{defs.Count} 个（继承合并完成）");
                     var defExisting = await Task.Run(() =>
                     {

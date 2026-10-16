@@ -28,7 +28,12 @@ namespace RimTrans.Core.Defs
     /// </summary>
     public static class XmlInheritanceMerger
     {
-        public static List<OfflineDef> LoadAndMerge(IEnumerable<string> defDirs, string modId, Action<string>? onError = null)
+        /// <summary>
+        /// V1.1：extraDefDirs 提供跨 Mod 继承的抽象节点源（依赖 Mod 的 Defs 目录）。
+        /// 补丁（Patches 目录）在继承合并完成后应用，对齐游戏加载顺序：注册→继承→补丁→入库。
+        /// </summary>
+        public static List<OfflineDef> LoadAndMerge(IEnumerable<string> defDirs, string modId, Action<string>? onError = null,
+            IEnumerable<string>? extraDefDirs = null, IEnumerable<string>? patchDirs = null)
         {
             var files = new List<(string path, string relName)>();
             foreach (var dir in defDirs)
@@ -42,11 +47,38 @@ namespace RimTrans.Core.Defs
             var nodesByName = new Dictionary<string, XElement>(StringComparer.OrdinalIgnoreCase);
             var pending = new List<(XElement node, string file)>();
 
+            // 跨 Mod：先注册依赖 Mod 的命名节点（只贡献 Name 抽象，不产出 Def）
+            if (extraDefDirs != null)
+            {
+                foreach (var dir in extraDefDirs)
+                {
+                    string defsRoot = Path.Combine(dir, "Defs");
+                    if (!Directory.Exists(defsRoot)) continue;
+                    foreach (var f in Directory.EnumerateFiles(defsRoot, "*.xml", SearchOption.AllDirectories))
+                    {
+                        XDocument dep;
+                        try { dep = XDocument.Load(f); }
+                        catch { continue; }
+                        foreach (var el in dep.Root?.Elements() ?? Enumerable.Empty<XElement>())
+                        {
+                            string? name = (string?)el.Attribute("Name");
+                            if (name != null && !nodesByName.ContainsKey(name))
+                                nodesByName[name] = el;
+                        }
+                    }
+                }
+            }
+
             foreach (var (path, relName) in files)
             {
                 XDocument doc;
                 try { doc = XDocument.Load(path); }
                 catch (Exception ex) { onError?.Invoke($"XML 解析失败 {path}: {ex.Message}"); continue; }
+
+                // 补丁作用于内存文档（绝不写回源文件）
+                if (patchDirs != null)
+                    foreach (var pd in patchDirs)
+                        PatchApplier.ApplyPatches(doc, pd, onError);
 
                 foreach (var el in doc.Root?.Elements() ?? Enumerable.Empty<XElement>())
                 {

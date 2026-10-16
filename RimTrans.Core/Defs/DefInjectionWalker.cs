@@ -69,7 +69,12 @@ namespace RimTrans.Core.Defs
                     CollectionValues = values,
                 });
                 for (int i = 0; i < liChildren.Count; i++)
-                    WalkNested(liChildren[i], nPath + "." + i, sPath + "." + i, result);
+                {
+                    // 列表句柄近似（对齐 TranslationHandleUtility）：compClass 值做句柄，如 comps.CompProperties_Usable→CompUsable
+                    string handle = ListElementHandle(liChildren[i]);
+                    string sSeg = handle ?? i.ToString();
+                    WalkNested(liChildren[i], nPath + "." + i, sPath + "." + sSeg, result);
+                }
                 return;
             }
 
@@ -105,6 +110,40 @@ namespace RimTrans.Core.Defs
                 IsCollection = false,
                 Value = text,
             });
+        }
+
+        /// <summary>
+        /// 列表元素句柄（近似 Verse.TranslationHandleUtility）：
+        /// li 含 compClass → 取类名去 CompProperties_ 前缀（如 CompProperties_Usable→CompUsable）；
+        /// 含 label/title/name 等命名性子元素 → 取其值。
+        /// </summary>
+        private static string? ListElementHandle(XElement li)
+        {
+            // li 的 Class 属性（对齐游戏 GetBestHandleWithIndexForListElement 的 TranslationHandle 语义）
+            string? cls = (string?)li.Attribute("Class");
+            if (!string.IsNullOrEmpty(cls))
+            {
+                string n = cls!;
+                int cut = n.LastIndexOf('.');
+                if (cut >= 0) n = n[(cut + 1)..];
+                // CompProperties_Usable → CompUsable（去 CompProperties_ 前缀、保留 Comp 头）
+                int cp = n.IndexOf("CompProperties_");
+                if (cp >= 0) return "Comp" + n[(cp + "CompProperties_".Length)..];
+                return n;
+            }
+            string? compClass = (string?)li.Element("compClass");
+            if (!string.IsNullOrEmpty(compClass))
+            {
+                string n = compClass!;
+                int cut = n.IndexOf("CompProperties_");
+                return cut >= 0 ? n[(cut + "CompProperties_".Length)..] : n;
+            }
+            foreach (var key in new[] { "label", "defName", "title", "name" })
+            {
+                string? v = (string?)li.Element(key);
+                if (!string.IsNullOrWhiteSpace(v)) return v;
+            }
+            return null;
         }
 
         private static void WalkNested(XElement li, string nPath, string sPath, List<PossibleInjection> result)
