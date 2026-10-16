@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RimTrans 翻译提取工具 - 项目计划</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --border: #2a2f3a;
+    --text: #d7dce4; --muted: #8b93a3; --accent: #5aa9e6; --accent2: #7ee0a3;
+    --warn: #e6b35a; --danger: #e67a7a; --tag: #2b3444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Segoe UI", "Microsoft YaHei", sans-serif; line-height: 1.65; padding: 32px 16px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header { border: 1px solid var(--border); background: linear-gradient(135deg, #1a2233, #171a21); border-radius: 12px; padding: 28px 32px; margin-bottom: 24px; }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  h1 .en { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 14px; }
+  .meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .meta b { color: var(--text); font-weight: 600; }
+  section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin-bottom: 20px; }
+  h2 { font-size: 19px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--accent); }
+  h3 { font-size: 15px; margin: 16px 0 8px; color: var(--accent2); }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 22px; }
+  li { margin: 4px 0; }
+  code { background: var(--tag); border-radius: 4px; padding: 1px 6px; font-family: Consolas, monospace; font-size: 13px; color: #ffd479; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--panel2); color: var(--accent); font-weight: 600; white-space: nowrap; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+  .warn-box { border: 1px solid var(--warn); background: rgba(230,179,90,0.08); border-radius: 10px; padding: 16px 20px; margin: 14px 0; }
+  .warn-box b { color: var(--warn); }
+  .danger-box { border: 1px solid var(--danger); background: rgba(230,122,122,0.08); border-radius: 10px; padding: 16px 20px; margin: 14px 0; }
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+  .flow .step { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; }
+  .flow .step.hl { border-color: var(--accent); color: var(--accent); }
+  .flow .arr { color: var(--muted); }
+  .pill { display: inline-block; background: var(--tag); border-radius: 999px; padding: 2px 10px; font-size: 12px; margin: 2px 4px 2px 0; }
+  .pill.ok { color: var(--accent2); border: 1px solid var(--accent2); }
+  .pill.p2 { color: var(--accent); border: 1px solid var(--accent); }
+  pre { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.5; margin: 10px 0; color: #c8d2e0; }
+  .mstone { display: grid; grid-template-columns: 64px 1fr 1fr; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 10px 0; }
+  .mstone > div { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .mstone > div:nth-child(3n+1) { background: var(--panel2); color: var(--accent); font-weight: 700; }
+  .mstone > div:nth-child(3n+2), .mstone > div:nth-child(3n) { border-right: 1px solid var(--border); }
+  .mstone > div:nth-child(3n) { border-right: none; }
+  .mstone > div:nth-last-child(-n+3) { border-bottom: none; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>RimTrans <span class="en">翻译提取工具</span> · 项目计划</h1>
+  <div class="sub">离线复刻「Extract translation」模组功能：图形界面选 Mod → 提取 → 术语回填 → AI 翻译 → 审阅写入</div>
+  <div class="meta">
+    <span><b>路径</b> D:\Visual Studio Code ALL\A Rimwold\Trans\</span>
+    <span><b>技术栈</b> C# WPF · .NET 9 · 单文件 exe</span>
+    <span><b>版本</b> V1.0 定稿 2026-10-17</span>
+    <span><b>配套</b> HANDOFF.md（交接）· PLAN.md</span>
+  </div>
+</header>
+
+<section>
+  <h2>1 · 总体流程</h2>
+  <div class="flow">
+    <span class="step">扫描 Mod（4 来源 + 自定义目录）</span><span class="arr">→</span>
+    <span class="step">选版本 (1.6 / 1.7)</span><span class="arr">→</span>
+    <span class="step">选目标语言</span><span class="arr">→</span>
+    <span class="step hl">提取 Keyed + DefInjected</span><span class="arr">→</span>
+    <span class="step">术语库回填官方译名</span><span class="arr">→</span>
+    <span class="step hl">AI 翻译剩余 TODO</span><span class="arr">→</span>
+    <span class="step">审阅对照表（可编辑）</span><span class="arr">→</span>
+    <span class="step hl">确认写入（自动 .bak 备份）</span>
+  </div>
+</section>
+
+<section>
+  <h2>2 · 功能规格</h2>
+
+  <h3>Mod 扫描器</h3>
+  <ul>
+    <li>来源：<span class="pill">创意工坊 workshop\content\294100</span><span class="pill">本地 Mods</span><span class="pill">游戏本体 Data（各 DLC）</span><span class="pill ok">自定义扫描源（添加目录按钮，持久化，可增删）</span></li>
+    <li>解析 <code>About\About.xml</code>（name / packageId / supportedVersions）与 <code>LoadFolders.xml</code>（版本子目录）</li>
+    <li>列表搜索、来源筛选、版本选择（决定读根目录还是 1.6/1.7 版本目录的 Defs 与 Languages）</li>
+  </ul>
+
+  <h3>提取器（行为与参考模组一致）</h3>
+  <table>
+    <tr><th>类型</th><th>源</th><th>输出</th><th>要点</th></tr>
+    <tr><td>Keyed</td><td><code>Languages\English\Keyed\*.xml</code></td><td><code>Languages\&lt;语言&gt;\Keyed\</code></td><td>值清空 + <code>&lt;!-- EN: 原文 --&gt;</code> 注释 + 已有翻译回填 + TODO + UNUSED 归并；旧 CodeLinked 目录改名处理</td></tr>
+    <tr><td>DefInjected</td><td>Mod 的 Defs XML</td><td><code>Languages\&lt;语言&gt;\DefInjected\&lt;DefType&gt;\&lt;defName&gt;.xml</code></td><td>离线 XML 继承合并（Abstract / Name / ParentName）→ 按 DefInjectionPackage 字段遍历规则生成（string / List&amp;lt;string&amp;gt; / 嵌套类 / 列表索引路径）</td></tr>
+  </table>
+
+  <h3>输出目标（三档可选，默认原 Mod 目录）</h3>
+  <ol>
+    <li><b>原 Mod 目录</b>：<code>&lt;Mod根目录&gt;\Languages\&lt;语言&gt;\</code>，与参考模组一致，玩家提取完直接可用</li>
+    <li><b>自定义目录</b>：浏览选择，按 Languages 结构写入（对接本地开发副本）</li>
+    <li><b>独立汉化包骨架</b>：自动生成 About.xml（packageId + 依赖声明）、LoadFolders.xml、Languages 目录——可直接发布的汉化 Mod 雏形</li>
+  </ol>
+  <p>安全：覆盖任何文件前自动 <code>.bak</code> 备份；写创意工坊目录弹"更新会覆盖"警告。</p>
+
+  <h3>术语库（Glossary）</h3>
+  <ul>
+    <li>来源<b>仅游戏官方翻译</b>：<code>Data\&lt;DLC&gt;\Languages\&lt;语言&gt;\</code> 的 DefInjected + Keyed</li>
+    <li>构建"EN 原文 → 官方译名"对照库，首次构建后缓存；翻译前自动匹配回填，命中条目 TODO 秒消</li>
+    <li>未命中条目发给 AI 时 prompt 附带术语约束（防自创译名，如 Warg=步行兽）</li>
+  </ul>
+
+  <h3>AI 翻译层</h3>
+  <ul>
+    <li><span class="pill p2">Player2 默认置顶 · 无需密钥</span> 探测 <code>GET :4315/v1/health</code> → 授权 <code>POST :4315/v1/login/web/019e12ba-6062-79ae-8c76-de13bea9af7a</code> 取 p2Key → 请求 <code>:4315/v1/chat/completions</code> 带 <code>player2-game-key</code> 头；未运行引导启动桌面端</li>
+    <li>供应商注册表照搬 RimTuber：Google / OpenAI / DeepSeek / Grok / GLM / OpenRouter / SiliconFlow / 本地模型 / 自定义</li>
+    <li><b>NormalizeEndpointUrl（强制）</b>：完整端点不动；版本目录（/v1、/v4、/v1beta、/openai、/api/paas…）补 <code>/chat/completions</code>；纯域名补 <code>/v1/chat/completions</code>；405 单独提示自动补全请重试；测试与正式调用同一出口；不回写原值</li>
+    <li>批量翻译：按 token 预算分批、编号对齐、失败重试一次后标记</li>
+  </ul>
+
+  <h3>审阅与写入</h3>
+  <ul>
+    <li>审阅对照表：EN 原文 | 术语命中 | AI 译文 | 可编辑 | 状态（术语回填 / AI / 失败 / TODO）</li>
+    <li>点"确认写入"才落盘（同样 .bak 备份）；完成报告含命中数 / 翻译数 / 失败数 / 输出位置</li>
+  </ul>
+</section>
+
+<section>
+  <h2>3 · 界面布局</h2>
+  <pre>┌──────────────────────────────────────────────────────────────┐
+│ 扫描源: [工坊] [本地] [Data] [自定义+]   [刷新]   版本:[1.6▾] │
+│ 搜索 [______________]   目标语言: [ChineseSimplified▾]        │
+│ ┌────────────────────────────────────────┐  [提取]  [停止]   │
+│ │ Mod 列表（名称/来源/包ID/已有语言目录）  │                   │
+│ │ 支持多选 Ctrl / Shift                    │                   │
+│ └────────────────────────────────────────┘                   │
+│ 输出: (o)原Mod目录  ( )自定义目录[浏览]  ( )汉化包骨架[浏览]  │
+│ ┌────────────────────────────────────────┐                   │
+│ │ 日志/进度（扫描数·提取条数·术语命中·AI批次）│                  │
+│ └────────────────────────────────────────┘                   │
+│ AI: 供应商[Player2▾] 端点[____] Key[____] 模型[____] [测试]   │
+└──────────────────────────────────────────────────────────────┘
+  提取完成 → 审阅窗口（DataGrid 对照表 + 确认写入）</pre>
+</section>
+
+<section>
+  <h2>4 · 里程碑 M1–M7</h2>
+  <div class="mstone">
+    <div>M1</div><div>解决方案骨架 + Mod 扫描器（4 来源 + 自定义 + 版本选择 + 搜索）</div><div>正确列出 830 工坊 + 36 本地 Mod，About / LoadFolders 解析无误</div>
+    <div>M2</div><div>Keyed 提取 + 输出三档 + .bak 备份</div><div>与游戏内提取 Keyed 结果 diff 一致</div>
+    <div>M3</div><div>Def 继承合并 + DefInjected 生成</div><div>挑 2 个 Mod 与游戏内提取 diff 一致</div>
+    <div>M4</div><div>术语库构建与回填</div><div>官方译名命中抽查通过</div>
+    <div>M5</div><div>AI 层（Player2 + 注册表 + 端点规范化 + 批量翻译）</div><div>测试连接通过 + 翻译一批成功</div>
+    <div>M6</div><div>审阅 UI + 确认写入 + 完成报告</div><div>全流程跑通一个 Mod 汉化</div>
+    <div>M7</div><div>单文件发布（win-x64 PublishSingleFile）</div><div>exe 独立运行验证</div>
+  </div>
+  <p>验证基准：与<b>游戏内参考模组</b>（Extract translation）对同一 Mod 的提取结果做目录 diff；推荐基准 Mod：<code>Maiya Trans01 RimTalk边缘世谭</code>。</p>
+</section>
+
+<section>
+  <h2>5 · 技术与结构</h2>
+  <table>
+    <tr><th>项</th><th>决定</th></tr>
+    <tr><td>结构</td><td><code>RimTrans.Core</code>（逻辑库，无 UI 依赖，可单测）+ <code>RimTrans.App</code>（WPF 界面）</td></tr>
+    <tr><td>依赖</td><td>零第三方 NuGet 起步：System.Xml.Linq / System.Formats.Tar / HttpClient / System.Text.Json</td></tr>
+    <tr><td>本机环境</td><td>dotnet SDK 9.0.315 已装；关键路径见 HANDOFF.md 第 4 节</td></tr>
+  </table>
+</section>
+
+<div class="warn-box">
+  <b>醒目提醒 · PatchOperation 后置到 V1.1</b><br>
+  V1.0 <b>不解析 PatchOperation</b>（Add / Replace / Remove / Insert）。使用补丁动态增改文本的 Mod 会<b>漏提取补丁部分</b>（纯 XML + 继承合并估计覆盖约 90% 的 Mod）。V1.1 实现高频的 Add / Replace / Insert。每次发布说明必须向用户声明此限制；每次开发会话开始前重读本提醒。
+</div>
+
+<div class="danger-box">
+  <b>开发红线（用户全局规则）</b><br>
+  1. RimWorld 运行期间（进程 <code>RimWorldWin64.exe</code> / <code>RimWorld.exe</code> 任一存在）禁止构建，先征询用户。<br>
+  2. 创意工坊目录写入必须走"覆盖警告 + .bak 备份"流程，不得静默写入。<br>
+  3. 进入游戏的翻译文本禁 emoji、避 <code>&amp;</code>（用 and / 和 或 <code>&amp;amp;</code>）。<br>
+  4. 一切 AI 端点调用必带 NormalizeEndpointUrl（405 修复），测试与正式同一出口。
+</div>
+
+<section>
+  <h2>6 · V1.1 展望</h2>
+  <ul>
+    <li>PatchOperation 支持（Add / Replace / Insert，参考 Verse.PatchOperation* 源码 xpath 语义）</li>
+    <li>模糊术语匹配、术语库手动增改界面</li>
+    <li>1.7（Waylith 引擎）目录布局适配</li>
+    <li>多 Mod 批量队列</li>
+  </ul>
+</section>
+
+<footer>RimTrans Project Plan · V1.0 · 2026-10-17 · 配套 HANDOFF.md / PLAN.md</footer>
+</div>
+</body>
+</html>
