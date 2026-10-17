@@ -126,6 +126,10 @@
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
                         <Button x:Name="BtnAdd" Content="＋ 添加词条" Click="BtnAdd_Click"/>
                         <Button x:Name="BtnDelete" Content="🗑 删除选中" Margin="8,0,0,0" Click="BtnDelete_Click"/>
+                        <Button x:Name="BtnImport" Content="📥 导入已有翻译…" Margin="8,0,0,0"
+                                Background="{StaticResource AccentBg}" BorderBrush="{StaticResource Accent}"
+                                Foreground="{StaticResource Accent}" Click="BtnImport_Click"
+                                ToolTip="选择一个汉化包/翻译Mod的 Languages\&lt;语言&gt; 目录（或其中的 Keyed/DefInjected 目录），自动从 EN 注释+译文配对导入词库。旧 Mod 更新后把旧翻译喂进来，大部分条目直接回填不再请求 AI"/>
                         <Button x:Name="BtnSave" Content="💾 保存" Margin="8,0,0,0" FontWeight="Bold"
                                 Background="{StaticResource AccentBg}" BorderBrush="{StaticResource Accent}"
                                 Foreground="{StaticResource Accent}" Click="BtnSave_Click"/>

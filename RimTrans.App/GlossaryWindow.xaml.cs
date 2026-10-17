@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -55,6 +56,40 @@ namespace RimTrans.App
             foreach (var s in sel) _entries.Remove(s);
             Grid.Items.Refresh();
             UpdateStat();
+        }
+
+        private void BtnImport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = $"选择翻译目录（ Languages\\{_settings.TargetLanguage} 或其中的 Keyed / DefInjected 目录）",
+            };
+            if (dlg.ShowDialog(this) != true) return;
+            string dir = dlg.FolderName;
+
+            // 用户可能选了 Languages 根、语言目录或直接 Keyed/DefInjected——逐层探测
+            string lang = _settings.TargetLanguage;
+            string target = dir;
+            if (Directory.Exists(Path.Combine(dir, lang))) target = Path.Combine(dir, lang);
+            if (!Directory.Exists(Path.Combine(target, "Keyed")) && !Directory.Exists(Path.Combine(target, "DefInjected")))
+            {
+                // 尝试下钻一层找任意含 Keyed/DefInjected 的子目录
+                var child = Directory.EnumerateDirectories(dir)
+                    .FirstOrDefault(d => Directory.Exists(Path.Combine(d, "Keyed")) || Directory.Exists(Path.Combine(d, "DefInjected")));
+                if (child != null) target = child;
+                else
+                {
+                    MessageBox.Show(this, "所选目录里没找到 Keyed 或 DefInjected 文件夹。\n请选择翻译Mod的 Languages 目录、目标语言目录，或其中的 Keyed / DefInjected 目录。", "导入失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            var (added, skipped) = Glossary.ImportFromTranslationDir(target, lang, _entries);
+            Grid.Items.Refresh();
+            UpdateStat();
+            MessageBox.Show(this,
+                $"导入完成：新增 {added} 条（重复/无EN注释跳过 {skipped} 条）。\n记得点「保存」写入词库；翻译时这些词条优先回填、不再请求 AI。", "导入完成",
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private async void BtnLoadOfficial_Click(object sender, RoutedEventArgs e)
