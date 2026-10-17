@@ -40,13 +40,13 @@
             <TextBlock Text="RimWorld 离线翻译提取工具 · 完全免费 · 开源 · 本地运行" Style="{StaticResource Sub}" Margin="0,2,0,0"/>
 
             <TextBlock Text="📌 五步上手" Style="{StaticResource H1}"/>
-            <TextBlock Style="{StaticResource Body}" Text="1. 扫描：顶部选来源（创意工坊/本地/自定义）→ 点「⟳ 刷新列表」"/>
+            <TextBlock Style="{StaticResource Body}" Text="1. 扫描：顶部选来源（创意工坊/本地/自定义）→ 点「⟳ 刷新列表」；找不到已订阅的模组时，点「⚙ 目录…」核对工坊目录（支持多个 Steam 库，可自动检测）"/>
             <TextBlock Style="{StaticResource Body}" Text="2. 设置：选游戏版本（如 1.6）与目标语言（要翻译成什么语言；提取以 Mod 的 English 为源）"/>
-            <TextBlock Style="{StaticResource Body}" Text="3. 选择 Mod：搜索过滤（可勾选「隐藏翻译Mod」排除已有汉化）→ 右键列表选操作："/>
-            <TextBlock Style="{StaticResource Sub}" Text="     · 提取（不做AI）：只生成待翻译模板（EN 注释 + TODO）"/>
-            <TextBlock Style="{StaticResource Sub}" Text="     · 翻译：提取 → 术语回填 → AI 翻译 → 弹审阅窗口 → 确认后写盘"/>
-            <TextBlock Style="{StaticResource Sub}" Text="     · 翻译并生成独立汉化Mod：同上，但输出为一个可发布的独立汉化 Mod"/>
-            <TextBlock Style="{StaticResource Body}" Text="4. 输出位置（③ 区）：原 Mod 目录（默认）/ 自定义目录 / 生成独立汉化Mod"/>
+            <TextBlock Style="{StaticResource Body}" Text="3. 选择 Mod：搜索过滤（可勾选「隐藏翻译Mod」排除已有汉化），然后右键列表或在 ③ 区选操作："/>
+            <TextBlock Style="{StaticResource Sub}" Text="     · 📝 提取：只生成待翻译模板（EN 注释 + TODO），写入 Mod 自己的 Languages"/>
+            <TextBlock Style="{StaticResource Sub}" Text="     · 🤖 提取并AI翻译：提取 → 术语回填 → AI 翻译 → 审阅 → 写入该 Mod 的 Languages"/>
+            <TextBlock Style="{StaticResource Sub}" Text="     · 📦 生成独立汉化Mod：同上，但输出为一个可上传创意工坊的全新汉化 Mod 文件夹（作者署名用「译者名」；描述保留原 Mod 内容并注明原作者）"/>
+            <TextBlock Style="{StaticResource Body}" Text="4. 翻译AI（④ 区）：选供应商/填密钥；Player2 免密钥（先启动登录其桌面端）"/>
             <TextBlock Style="{StaticResource Body}" Text="5. 审阅写入：对照表逐条检查，双击译文可修改 → 「确认写入」→ 完成"/>
 
             <TextBlock Text="🤖 翻译AI 配置（免费渠道推荐）" Style="{StaticResource H1}"/>

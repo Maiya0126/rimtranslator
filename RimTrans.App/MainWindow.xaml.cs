@@ -23,16 +23,18 @@ namespace RimTrans.App
         {
             InitializeComponent();
             _uiReady = true;
+            _loadingUi = true;
             LoadUiFromSettings();
+            _loadingUi = false;
             Log("边缘译者 RimTranslator 已启动。");
             _ = WarmCloudGlossaryAsync();
             Loaded += (_, _) => _ = AutoScanAsync();
         }
 
         /// <summary>启动自动扫描（后台静默，不阻塞界面）。</summary>
-        private async Task AutoScanAsync()
+        private async Task AutoScanAsync(bool force = false)
         {
-            if (_allMods.Count > 0 || BtnScan.IsEnabled == false) return;
+            if (!force && (_allMods.Count > 0 || BtnScan.IsEnabled == false)) return;
             await Task.Delay(300);
             var sources = GetSelectedSources().ToList();
             if (sources.Count == 0) { Log("未找到可扫描的来源目录，请检查设置。"); return; }
@@ -121,6 +123,8 @@ namespace RimTrans.App
             var versions = new List<string> { "1.4", "1.5", "1.6", "1.7" };
             CmbVersion.ItemsSource = versions;
             CmbVersion.SelectedItem = versions.Contains(_settings.GameVersion) ? _settings.GameVersion : "1.6";
+
+            TxtAuthor.Text = _settings.TranslatorAuthor;
         }
 
         public class LanguageItem
@@ -130,10 +134,23 @@ namespace RimTrans.App
             public override string ToString() => Display;
         }
 
+        private void TxtAuthor_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_loadingUi) return;
+            _settings.TranslatorAuthor = TxtAuthor.Text.Trim();
+            _settings.Save();
+        }
+
         private IEnumerable<(ModSource, string)> GetSelectedSources()
         {
-            if (ChkWorkshop.IsChecked == true && Directory.Exists(_settings.WorkshopDir))
-                yield return (ModSource.Workshop, _settings.WorkshopDir);
+            if (ChkWorkshop.IsChecked == true)
+            {
+                if (Directory.Exists(_settings.WorkshopDir))
+                    yield return (ModSource.Workshop, _settings.WorkshopDir);
+                foreach (var dir in _settings.ExtraWorkshopDirs)
+                    if (Directory.Exists(dir))
+                        yield return (ModSource.Workshop, dir);
+            }
             if (ChkLocal.IsChecked == true && Directory.Exists(_settings.LocalModsDir))
                 yield return (ModSource.Local, _settings.LocalModsDir);
             if (ChkData.IsChecked == true && Directory.Exists(_settings.GameDataDir))
@@ -142,6 +159,18 @@ namespace RimTrans.App
                 foreach (var dir in _settings.CustomSources)
                     if (Directory.Exists(dir))
                         yield return (ModSource.Custom, dir);
+        }
+
+        private void BtnDirs_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new SettingsWindow(_settings, async () =>
+            {
+                Log("目录设置已更新，自动重新扫描…");
+                LoadUiFromSettings();
+                await AutoScanAsync(force: true);
+            })
+            { Owner = this };
+            win.ShowDialog();
         }
 
         private async void BtnScan_Click(object sender, RoutedEventArgs e)
@@ -209,6 +238,7 @@ namespace RimTrans.App
             return false;
         }
 
+        private bool _loadingUi;
         private bool _uiReady;
 
         private void ApplyFilter()
@@ -297,7 +327,14 @@ namespace RimTrans.App
             string outDir = TxtOutDir.Text;
             if (useSkeleton && (string.IsNullOrWhiteSpace(outDir) || !Directory.Exists(outDir)))
             {
-                MessageBox.Show(this, "「翻译并生成独立汉化Mod」需要先在下方选择输出目录（新 Mod 存放位置）。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(this, "「生成独立汉化Mod」需要先在右侧选择保存目录（新 Mod 的存放位置）。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            string author = TxtAuthor.Text.Trim();
+            if (useSkeleton && author.Length == 0)
+            {
+                MessageBox.Show(this, "「生成独立汉化Mod」需要先填写「译者名」——它将写入新 Mod 的 About.xml 作为作者署名（不会冒用原作者名）。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                TxtAuthor.Focus();
                 return;
             }
 
@@ -321,6 +358,8 @@ namespace RimTrans.App
 
             var logger = new UiLogger(this);
             BtnExtract.IsEnabled = false;
+            BtnTranslate.IsEnabled = false;
+            BtnTranslateSkeleton.IsEnabled = false;
             try
             {
                 // 术语库：自定义词库 + 官方库
@@ -339,7 +378,7 @@ namespace RimTrans.App
                     if (useSkeleton)
                     {
                         string skelDir = Path.Combine(outDir, SafeDirName(mod.Name));
-                        SkeletonModBuilder.Build(skelDir, mod, options);
+                        SkeletonModBuilder.Build(skelDir, mod, options, author);
                         Log($"  已生成独立汉化Mod骨架：{skelDir}");
                     }
 
@@ -403,6 +442,8 @@ namespace RimTrans.App
             finally
             {
                 BtnExtract.IsEnabled = true;
+                BtnTranslate.IsEnabled = true;
+                BtnTranslateSkeleton.IsEnabled = true;
             }
         }
 
@@ -434,28 +475,8 @@ namespace RimTrans.App
                 GameVersion = _settings.GameVersion,
                 Language = _settings.TargetLanguage,
                 GameDataDir = _settings.GameDataDir,
+                Mode = OutputMode.ModDir,
             };
-            if (RbOutModDir.IsChecked == true) options.Mode = OutputMode.ModDir;
-            else if (RbOutCustom.IsChecked == true)
-            {
-                if (!Directory.Exists(TxtOutDir.Text))
-                {
-                    MessageBox.Show(this, "请先点「浏览」选择自定义输出目录。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                options.Mode = OutputMode.CustomDir;
-                options.CustomDir = TxtOutDir.Text;
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(TxtOutDir.Text) || !Directory.Exists(TxtOutDir.Text))
-                {
-                    MessageBox.Show(this, "请先点「浏览」选择独立汉化Mod的存放目录。", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                options.Mode = OutputMode.SkeletonMod;
-                options.CustomDir = TxtOutDir.Text;
-            }
 
             if (options.Mode == OutputMode.ModDir)
             {
@@ -469,6 +490,8 @@ namespace RimTrans.App
 
             var logger = new UiLogger(this);
             BtnExtract.IsEnabled = false;
+            BtnTranslate.IsEnabled = false;
+            BtnTranslateSkeleton.IsEnabled = false;
             try
             {
                 int done = 0;
@@ -480,7 +503,7 @@ namespace RimTrans.App
                     if (options.Mode == OutputMode.SkeletonMod)
                     {
                         string skelDir = Path.Combine(options.CustomDir, SafeDirName(mod.Name));
-                        SkeletonModBuilder.Build(skelDir, mod, options);
+                        SkeletonModBuilder.Build(skelDir, mod, options, TxtAuthor.Text.Trim());
                         Log($"  已生成独立汉化Mod骨架：{skelDir}");
                     }
                     var result = await Task.Run(() => KeyedExtractor.Extract(mod, options, LoadExisting(mod, options), logger));
@@ -517,6 +540,8 @@ namespace RimTrans.App
             finally
             {
                 BtnExtract.IsEnabled = true;
+                BtnTranslate.IsEnabled = true;
+                BtnTranslateSkeleton.IsEnabled = true;
             }
         }
 
@@ -540,8 +565,19 @@ namespace RimTrans.App
 
         private void SetProgress(string text, double percent)
         {
-            TxtProgress.Text = text;
-            Progress.Value = Math.Clamp(percent, 0, 100);
+            if (Dispatcher.CheckAccess())
+            {
+                TxtProgress.Text = text;
+                Progress.Value = Math.Clamp(percent, 0, 100);
+            }
+            else
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    TxtProgress.Text = text;
+                    Progress.Value = Math.Clamp(percent, 0, 100);
+                });
+            }
         }
 
         private class UiLogger : IExtractLogger
@@ -678,7 +714,7 @@ namespace RimTrans.App
 
         private async void CheckForUpdate()
         {
-            Log("检查更新：当前 v1.2.6。");
+            Log("检查更新：当前 v1.2.7。");
             try
             {
                 // 更新源：GitHub Releases latest API（仓库发布后启用）
@@ -691,13 +727,13 @@ namespace RimTrans.App
                     using var doc = System.Text.Json.JsonDocument.Parse(json);
                     string tag = doc.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() ?? "" : "";
                     string url = doc.RootElement.TryGetProperty("html_url", out var u) ? u.GetString() ?? "" : "";
-                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.2.6")
+                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.2.7")
                     {
                         if (MessageBox.Show(this, $"发现新版本 {tag}，是否打开下载页？", "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
                         return;
                     }
-                    MessageBox.Show(this, $"当前已是最新版本（v1.2.6）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(this, $"当前已是最新版本（v1.2.7）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
@@ -714,8 +750,20 @@ namespace RimTrans.App
 
         private void Log(string message)
         {
-            TxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}\n");
-            TxtLog.ScrollToEnd();
+            string line = $"[{DateTime.Now:HH:mm:ss}] {message}\n";
+            if (Dispatcher.CheckAccess())
+            {
+                TxtLog.AppendText(line);
+                TxtLog.ScrollToEnd();
+            }
+            else
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    TxtLog.AppendText(line);
+                    TxtLog.ScrollToEnd();
+                });
+            }
         }
     }
 }

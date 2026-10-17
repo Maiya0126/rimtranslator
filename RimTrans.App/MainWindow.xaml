@@ -244,6 +244,8 @@
                               ToolTip="官方 DLC 翻译已完备，默认不列出（术语库仍会读取 Data）"/>
                     <CheckBox x:Name="ChkCustom" Content="自定义" IsChecked="True"/>
                     <Button x:Name="BtnAddSource" Content="＋ 添加目录…" Margin="8,0,0,0" Click="BtnAddSource_Click"/>
+                    <Button x:Name="BtnDirs" Content="⚙ 目录…" Margin="2,0,0,0" Click="BtnDirs_Click"
+                            ToolTip="设置创意工坊 / 本地 Mods / 游戏 Data 目录；支持多个 Steam 库，保存后自动重扫"/>
                     <Button x:Name="BtnScan" Content="⟳ 刷新列表" FontWeight="Bold" Margin="8,0,0,0"
                             Background="{StaticResource ActionBg}" BorderBrush="{StaticResource Action}"
                             Foreground="{StaticResource Action}" Click="BtnScan_Click"/>
@@ -270,7 +272,6 @@
                         <ColumnDefinition Width="300"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox x:Name="TxtSearch" Grid.Column="1" TextChanged="TxtSearch_TextChanged"
@@ -280,10 +281,6 @@
                               ToolTip="过滤名称以 汉化/Chinese/Translation 等开头或结尾的纯翻译包；功能 Mod 不受影响"/>
                     <TextBlock x:Name="TxtCount" Grid.Column="3" Text="先点上方「刷新列表」" Foreground="{StaticResource TextSub}"
                                FontStyle="Italic" Margin="12,0,8,0" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                    <Button x:Name="BtnExtract" Grid.Column="4" Content="▶ 提取" Padding="24,6" FontWeight="Bold"
-                            Background="{StaticResource ActionBg}" BorderBrush="{StaticResource Action}"
-                            Foreground="{StaticResource Action}" Click="BtnExtract_Click"
-                            ToolTip="提取 Keyed + DefInjected 待翻译文本（不做 AI 翻译）。也可右键列表。"/>
                 </Grid>
                 <DataGrid x:Name="GridMods" SelectionMode="Extended" SelectionUnit="FullRow"
                           AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
@@ -292,9 +289,9 @@
                           RowHeight="40">
                     <DataGrid.ContextMenu>
                         <ContextMenu Background="#F2EBDA" Foreground="{StaticResource TextMain}">
-                            <MenuItem Header="提取（不做AI）" Click="BtnExtract_Click" FontWeight="Bold"/>
-                            <MenuItem Header="翻译（提取 → 术语回填 → AI → 审阅）" Click="MenuTranslate_Click"/>
-                            <MenuItem Header="翻译并生成独立汉化Mod" Click="MenuTranslateSkeleton_Click"/>
+                            <MenuItem Header="📝 提取（不做AI）" Click="BtnExtract_Click" FontWeight="Bold"/>
+                            <MenuItem Header="🤖 提取并AI翻译（→ 审阅 → 写入本 Mod）" Click="MenuTranslate_Click"/>
+                            <MenuItem Header="📦 生成独立汉化Mod（翻译 → 新 Mod 文件夹）" Click="MenuTranslateSkeleton_Click"/>
                             <Separator/>
                             <MenuItem Header="打开文件夹" Click="MenuOpenFolder_Click"/>
                         </ContextMenu>
@@ -333,18 +330,31 @@
             </DockPanel>
         </Border>
 
-        <!-- ═══ ③ 输出位置 ═══ -->
+        <!-- ═══ ③ 选择操作（先在上方选好 Mod）═══ -->
         <Border Grid.Row="2" Style="{StaticResource GroupBorder}">
             <StackPanel>
-                <TextBlock Text="③ 输出位置" Style="{StaticResource GroupTitle}"/>
+                <TextBlock Text="③ 选择操作（对上方选中的 Mod 执行）" Style="{StaticResource GroupTitle}"/>
                 <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="RbOutModDir" Content="原 Mod 目录" IsChecked="True"
-                                 ToolTip="写进所选 Mod 自己的 Languages 目录（最常用，提取完即用）。写工坊目录会弹覆盖警告并自动 .bak 备份。"/>
-                    <RadioButton x:Name="RbOutCustom" Content="自定义目录"/>
-                    <TextBox x:Name="TxtOutDir" Width="300"/>
+                    <Button x:Name="BtnExtract" Content="📝 提取" Padding="18,7" FontWeight="Bold" Click="BtnExtract_Click"
+                            Background="{StaticResource ActionBg}" BorderBrush="{StaticResource Action}"
+                            Foreground="{StaticResource Action}"
+                            ToolTip="只生成待翻译模板（EN 注释 + TODO），不做 AI 翻译。写入所选 Mod 自己的 Languages 目录（工坊 Mod 会先弹覆盖警告并自动 .bak 备份）。"/>
+                    <Button x:Name="BtnTranslate" Content="🤖 提取并AI翻译" Padding="18,7" FontWeight="Bold" Margin="8,0,0,0"
+                            Click="MenuTranslate_Click"
+                            Background="{StaticResource ActionBg}" BorderBrush="{StaticResource Action}"
+                            Foreground="{StaticResource Action}"
+                            ToolTip="提取 → 术语回填 → AI 翻译 → 审阅窗口确认 → 写入所选 Mod 自己的 Languages 目录（覆盖前自动 .bak 备份）。"/>
+                    <Button x:Name="BtnTranslateSkeleton" Content="📦 生成独立汉化Mod" Padding="18,7" FontWeight="Bold" Margin="8,0,0,0"
+                            Click="MenuTranslateSkeleton_Click"
+                            Background="{StaticResource AccentBg}" BorderBrush="{StaticResource Accent}"
+                            Foreground="{StaticResource Accent}"
+                            ToolTip="翻译并输出为一个全新的独立汉化 Mod（自动生成 About.xml 声明依赖原 Mod、LoadFolders.xml、Languages），可直接上传创意工坊。保存位置在右侧选择。"/>
+                    <TextBlock Text="译者名" Style="{StaticResource FieldLabel}" Margin="16,0,4,0"
+                               ToolTip="将写入新 Mod About.xml 的 author 字段（署名为你）。填写一次后会记住"/>
+                    <TextBox x:Name="TxtAuthor" Width="120" TextChanged="TxtAuthor_TextChanged" ToolTip="将写入新 Mod About.xml 的 author 字段（署名为你）。填写一次后会记住"/>
+                    <TextBlock Text="保存到" Style="{StaticResource FieldLabel}" Margin="8,0,4,0"/>
+                    <TextBox x:Name="TxtOutDir" Width="220" ToolTip="独立汉化Mod 的存放目录"/>
                     <Button x:Name="BtnBrowseOut" Content="浏览…" Click="BtnBrowseOut_Click"/>
-                    <RadioButton x:Name="RbOutSkeleton" Content="生成独立汉化Mod" Margin="18,0,0,0"
-                                 ToolTip="另建一个全新的汉化 Mod（自动生成 About.xml 声明依赖原 Mod、LoadFolders.xml、Languages 目录），可直接发布创意工坊；输出目录用左侧「浏览」选择。"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -407,7 +417,7 @@
         <Border Grid.Row="5" Background="{StaticResource PanelLight}" BorderBrush="{StaticResource Border}"
                 BorderThickness="0,1,0,0" CornerRadius="0" Padding="12,6">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="边缘译者 RimTranslator v1.2.6" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
+                <TextBlock Text="边缘译者 RimTranslator v1.2.7" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
                 <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" ToolTip="开源仓库：源码 / Issue / Releases">
                     <Hyperlink NavigateUri="https://github.com/Maiya0126/rimtranslator" RequestNavigate="Link_RequestNavigate"
                                Foreground="#24292F">⭐ GitHub 开源</Hyperlink>
@@ -431,7 +441,7 @@
                 </TextBlock>
                 <TextBlock Text="API 密钥仅存本机，不上传不回传" VerticalAlignment="Center" Foreground="{StaticResource TextSub}"
                            FontStyle="Italic" Margin="18,0,0,0"
-                           ToolTip="隐私承诺：密钥只保存在你电脑的 %APPDATA%\RimTrans\settings.json，开发者无法读取"/>
+                           ToolTip="隐私承诺：密钥只保存在你自己的电脑内，开发者无法读取"/>
             </StackPanel>
         </Border>
     </Grid>

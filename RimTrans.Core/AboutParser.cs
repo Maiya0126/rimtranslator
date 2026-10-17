@@ -28,6 +28,8 @@ namespace RimTrans.Core
                         .Select(e => e.Value.Trim())
                         .Where(v => v.Length > 0)
                         .ToList();
+                var desc = (string?)root.Element("description");
+                if (!string.IsNullOrWhiteSpace(desc)) mod.Description = desc.Trim();
                 mod.AboutParsed = true;
             }
             catch

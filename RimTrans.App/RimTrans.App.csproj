@@ -12,7 +12,7 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>RimTranslator</AssemblyName>
-    <Version>1.2.6</Version>
+    <Version>1.2.7</Version>
     <Product>边缘译者 RimTranslator</Product>
     <Company>Maiya026</Company>
     <Authors>Maiya026</Authors>

@@ -18,6 +18,7 @@ namespace RimTrans.Core
         public string Name { get; set; } = "";
         public string PackageId { get; set; } = "";
         public string Author { get; set; } = "";
+        public string Description { get; set; } = "";
         public string RootDir { get; set; } = "";
         public ModSource Source { get; set; }
         public string PublishedFileId { get; set; } = "";
