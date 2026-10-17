@@ -50,19 +50,24 @@
             <TextBlock Style="{StaticResource Body}" Text="5. 审阅写入：对照表逐条检查，双击译文可修改 → 「确认写入」→ 完成"/>
 
             <TextBlock Text="🤖 翻译AI 配置（免费渠道推荐）" Style="{StaticResource H1}"/>
-            <TextBlock Style="{StaticResource Body}" Text="· 首选 Player2（默认，免密钥）：先启动并登录 Player2 桌面端，再点「测试连接」"/>
-            <TextBlock Style="{StaticResource Body}" Text="· 免费额度推荐 硅基流动 SiliconFlow：用"/>
+            <TextBlock Style="{StaticResource Body}" Text="· 首选 Player2（默认，免密钥）：先从"/>
+            <TextBlock Margin="14,2,0,0">
+                <Hyperlink NavigateUri="https://player2.game/" RequestNavigate="Link_RequestNavigate"
+                           Foreground="#B45309" FontWeight="Bold">官网 player2.game 下载</Hyperlink>
+                <Run Text="并启动登录 Player2 桌面端，回来点「测试连接」即可"/>
+            </TextBlock>
+            <TextBlock Style="{StaticResource Body}" Text="· 免费额度推荐 硅基流动 SiliconFlow："/>
             <TextBlock Margin="14,2,0,0">
                 <Hyperlink NavigateUri="https://cloud.siliconflow.cn/i/hazSLAR1" RequestNavigate="Link_RequestNavigate"
-                           Foreground="#B45309" FontWeight="Bold">我的邀请链接注册（点此直达，送免费额度）</Hyperlink>
-                <Run Text="，注册后在「密钥」里填 SiliconFlow 的 API Key 即可（软件已内置其端点，模型可填 Qwen/Qwen2.5-7B-Instruct 等免费模型）"/>
+                           Foreground="#B45309" FontWeight="Bold">点此直达，送免费额度</Hyperlink>
+                <Run Text="（注册后在「密钥」里填 SiliconFlow 的 API Key，软件已内置其端点，模型可填 Qwen/Qwen2.5-7B-Instruct 等免费模型）"/>
             </TextBlock>
             <TextBlock Style="{StaticResource Body}" Text="· 其他供应商（Gemini/OpenAI/DeepSeek/Grok/GLM/OpenRouter/SiliconFlow）：切换后填 API 密钥，端点和默认模型自动填好"/>
             <TextBlock Style="{StaticResource Body}" Text="· 本地模型：LM Studio (1234) / Ollama (11434) / vLLM (8000)，免密钥"/>
             <TextBlock Style="{StaticResource Body}" Text="· 自定义：任意 OpenAI 兼容端点；只填域名也行，工具自动补全路径（405 会提示后重试）"/>
 
             <TextBlock Text="🔒 隐私承诺" Style="{StaticResource H1}"/>
-            <TextBlock Style="{StaticResource Body}" Text="你的 API 密钥只保存在你自己电脑的 %APPDATA%\RimTrans\settings.json；工具不内置、不上传、不回传任何遥测——开发者也无法读取。AI 请求直接从本机发往你自己填写的供应商端点。"/>
+            <TextBlock Style="{StaticResource Body}" Text="你的 API 密钥只保存在你自己电脑内。"/>
 
             <TextBlock Text="📚 词库管理" Style="{StaticResource H1}"/>
             <TextBlock Style="{StaticResource Body}" Text="· 自定义词库：你的私人词库，翻译时优先于官方术语库。觉得某条官方译名不对？添加同名英文词条、填入你的译法即可顶掉官方——无需删除任何东西"/>
@@ -74,17 +79,32 @@
 
             <TextBlock Text="❓ 常见问题" Style="{StaticResource H1}"/>
             <TextBlock Style="{StaticResource Body}" Text="问：提取时提示没有 English/Keyed？"/>
-            <TextBlock Style="{StaticResource Sub}" Text="答：该 Mod 没有英文源文本（或藏在版本子目录）。英文是提取基准，没有就无法生成模板，属正常跳过。"/>
+            <TextBlock Style="{StaticResource Sub}" Text="答：该 Mod 没有英文源文本（或藏在版本子目录）。英文是提取基准，没有就无法生成翻译模板，属正常跳过。"/>
             <TextBlock Style="{StaticResource Body}" Text="问：为什么有些文本提取不到？"/>
-            <TextBlock Style="{StaticResource Sub}" Text="答：① PatchOperation 补丁动态产生的文本 V1.0 暂不解析（约覆盖 90% Mod）；② 跨 Mod 继承的 Def 暂无法离线解析；③ 代码动态注册的 Def 离线抓不到。均已在 README 声明，V1.1 逐步支持。"/>
+            <TextBlock Style="{StaticResource Sub}" Text="答：① 少数 PatchOperation 操作类型（FindMod/Sequence/Conditional 等）暂不支持，用它们的 Mod 会漏掉那部分文本；② Mod 作者没做本地化支持——文本硬编码在 C# 代码里、或直接写死在界面里没走翻译键，这类内容任何提取工具都拿不到（游戏内提取器也一样），只能联系 Mod 作者添加翻译键；③ 代码动态注册的 Def 离线抓不到。"/>
             <TextBlock Style="{StaticResource Body}" Text="问：我是 Modder，只做了简中，能翻成日语放回自己的 Mod 吗？"/>
             <TextBlock Style="{StaticResource Sub}" Text="答：可以。目标语言选 日本語，提取翻译后选「原 Mod 目录」输出，即写入你的 Mod 的 Languages\Japanese\。"/>
 
             <TextBlock Text="🙏 致谢" Style="{StaticResource H1}"/>
-            <TextBlock Style="{StaticResource Body}" Text="本工具的提取逻辑（ExtractKey / DefInjected 生成 / 注释格式等）基于创意工坊模组 Extract translation（作者 HaiLuan）对齐实现，感谢原作者！"/>
+            <TextBlock Style="{StaticResource Body}">
+                <Run Text="本工具的提取逻辑（ExtractKey / DefInjected 生成 / 注释格式等）基于创意工坊模组 "/>
+                <Hyperlink NavigateUri="https://steamcommunity.com/sharedfiles/filedetails/?id=3026452122" RequestNavigate="Link_RequestNavigate"
+                           Foreground="#B45309">Extract translation</Hyperlink>
+                <Run Text="（作者 HaiLuan）对齐实现，感谢原作者！"/>
+            </TextBlock>
 
             <TextBlock Text="💬 支持与反馈" Style="{StaticResource H1}"/>
-            <TextBlock Style="{StaticResource Body}" Text="QQ群 1568455（使用帮助、汉化交流）· GitHub 开源仓库 · 爱发电 afdian.com/a/maiya0126 —— 均可从主界面底部链接直达。如果工具帮到了你，欢迎请作者喝杯奶茶。"/>
+            <TextBlock Style="{StaticResource Body}" Text="以下渠道都可从主界面底部链接直达："/>
+            <TextBlock Margin="14,4,0,0">
+                <Hyperlink NavigateUri="https://github.com/Maiya0126/rimtranslator" RequestNavigate="Link_RequestNavigate">⭐ GitHub 开源仓库</Hyperlink>
+                <Run Text="　（源码 / 问题反馈 / 版本下载）"/>
+            </TextBlock>
+            <TextBlock Margin="14,2,0,0" Text="👥 QQ群 1568455（使用帮助、汉化交流，群号可点击主界面底部自动复制）"/>
+            <TextBlock Margin="14,2,0,0">
+                <Hyperlink NavigateUri="https://afdian.com/a/maiya0126" RequestNavigate="Link_RequestNavigate"
+                           Foreground="#BE3455">💖 爱发电支持作者</Hyperlink>
+                <Run Text="　如果工具帮到了你，欢迎请作者喝杯奶茶"/>
+            </TextBlock>
         </StackPanel>
     </ScrollViewer>
 </Window>
