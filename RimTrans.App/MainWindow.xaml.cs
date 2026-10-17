@@ -678,7 +678,7 @@ namespace RimTrans.App
 
         private async void CheckForUpdate()
         {
-            Log("检查更新：当前 v1.0.0，更新源待发布后接入（GitHub Releases）。");
+            Log("检查更新：当前 v1.2.6。");
             try
             {
                 // 更新源：GitHub Releases latest API（仓库发布后启用）
@@ -691,13 +691,13 @@ namespace RimTrans.App
                     using var doc = System.Text.Json.JsonDocument.Parse(json);
                     string tag = doc.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() ?? "" : "";
                     string url = doc.RootElement.TryGetProperty("html_url", out var u) ? u.GetString() ?? "" : "";
-                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.0.0")
+                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.2.6")
                     {
                         if (MessageBox.Show(this, $"发现新版本 {tag}，是否打开下载页？", "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
                         return;
                     }
-                    MessageBox.Show(this, $"当前已是最新版本（v1.0.0）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(this, $"当前已是最新版本（v1.2.6）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {

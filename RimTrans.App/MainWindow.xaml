@@ -407,7 +407,7 @@
         <Border Grid.Row="5" Background="{StaticResource PanelLight}" BorderBrush="{StaticResource Border}"
                 BorderThickness="0,1,0,0" CornerRadius="0" Padding="12,6">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="边缘译者 RimTranslator v1.0" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
+                <TextBlock Text="边缘译者 RimTranslator v1.2.6" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
                 <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" ToolTip="开源仓库：源码 / Issue / Releases">
                     <Hyperlink NavigateUri="https://github.com/Maiya0126/rimtranslator" RequestNavigate="Link_RequestNavigate"
                                Foreground="#24292F">⭐ GitHub 开源</Hyperlink>
