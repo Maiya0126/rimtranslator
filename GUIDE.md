@@ -12,12 +12,13 @@
 4. **输出位置**（③ 区）：原 Mod 目录（默认）/ 自定义目录 / 生成独立汉化Mod（后两项需「浏览」选目录）
 5. **审阅写入**：对照表中逐条检查，双击译文单元格可修改 → 点「确认写入」→ 完成
 
-## 翻译AI 配置
+## 翻译AI 配置（免费渠道推荐）
 
 | 供应商 | 说明 |
 |---|---|
-| **Player2（默认）** | 免密钥。需先启动并登录 [Player2 桌面端](https://player2.game)；未启动时无法翻译，可换其他供应商 |
-| Google Gemini / OpenAI / DeepSeek / Grok / GLM / OpenRouter / SiliconFlow | 切换后填自己的 API 密钥，端点与默认模型自动填好 |
+| **Player2（默认·首选）** | 免密钥。需先启动并登录 [Player2 桌面端](https://player2.game)；未启动时无法翻译，可换其他供应商 |
+| **硅基流动 SiliconFlow（免费额度推荐）** | [用我的邀请链接注册（送免费额度）](https://cloud.siliconflow.cn/i/hazSLAR1)，注册后在「密钥」填 SiliconFlow 的 API Key（软件已内置端点，模型可填 Qwen/Qwen2.5-7B-Instruct 等免费模型） |
+| Google Gemini / OpenAI / DeepSeek / Grok / GLM / OpenRouter | 切换后填自己的 API 密钥，端点与默认模型自动填好 |
 | 本地模型 | LM Studio (1234) / Ollama (11434) / vLLM (8000)，免密钥 |
 | 自定义 | 任意 OpenAI 兼容端点；端点只填域名也行，工具自动补全路径（405 会提示后重试） |
 

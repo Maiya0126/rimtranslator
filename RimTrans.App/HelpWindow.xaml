@@ -49,8 +49,14 @@
             <TextBlock Style="{StaticResource Body}" Text="4. 输出位置（③ 区）：原 Mod 目录（默认）/ 自定义目录 / 生成独立汉化Mod"/>
             <TextBlock Style="{StaticResource Body}" Text="5. 审阅写入：对照表逐条检查，双击译文可修改 → 「确认写入」→ 完成"/>
 
-            <TextBlock Text="🤖 翻译AI 配置" Style="{StaticResource H1}"/>
-            <TextBlock Style="{StaticResource Body}" Text="· Player2（默认，免密钥）：先启动并登录 Player2 桌面端，再点「测试连接」"/>
+            <TextBlock Text="🤖 翻译AI 配置（免费渠道推荐）" Style="{StaticResource H1}"/>
+            <TextBlock Style="{StaticResource Body}" Text="· 首选 Player2（默认，免密钥）：先启动并登录 Player2 桌面端，再点「测试连接」"/>
+            <TextBlock Style="{StaticResource Body}" Text="· 免费额度推荐 硅基流动 SiliconFlow：用"/>
+            <TextBlock Margin="14,2,0,0">
+                <Hyperlink NavigateUri="https://cloud.siliconflow.cn/i/hazSLAR1" RequestNavigate="Link_RequestNavigate"
+                           Foreground="#B45309" FontWeight="Bold">我的邀请链接注册（点此直达，送免费额度）</Hyperlink>
+                <Run Text="，注册后在「密钥」里填 SiliconFlow 的 API Key 即可（软件已内置其端点，模型可填 Qwen/Qwen2.5-7B-Instruct 等免费模型）"/>
+            </TextBlock>
             <TextBlock Style="{StaticResource Body}" Text="· 其他供应商（Gemini/OpenAI/DeepSeek/Grok/GLM/OpenRouter/SiliconFlow）：切换后填 API 密钥，端点和默认模型自动填好"/>
             <TextBlock Style="{StaticResource Body}" Text="· 本地模型：LM Studio (1234) / Ollama (11434) / vLLM (8000)，免密钥"/>
             <TextBlock Style="{StaticResource Body}" Text="· 自定义：任意 OpenAI 兼容端点；只填域名也行，工具自动补全路径（405 会提示后重试）"/>
