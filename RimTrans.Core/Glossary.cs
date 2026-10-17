@@ -41,7 +41,7 @@ namespace RimTrans.Core
         }
 
         private static string CustomPath(string language) =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTrans", $"glossary-{language}.json");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTranslator", $"glossary-{language}.json");
 
         public static List<GlossaryEntry> LoadCustom(string language)
         {

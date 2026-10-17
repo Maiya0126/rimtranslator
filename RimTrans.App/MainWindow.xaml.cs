@@ -24,8 +24,36 @@ namespace RimTrans.App
             InitializeComponent();
             _uiReady = true;
             LoadUiFromSettings();
-            Log("边缘译者 RimTranslator 已启动。点击「刷新列表」扫描 Mod。");
+            Log("边缘译者 RimTranslator 已启动。");
             _ = WarmCloudGlossaryAsync();
+            Loaded += (_, _) => _ = AutoScanAsync();
+        }
+
+        /// <summary>启动自动扫描（后台静默，不阻塞界面）。</summary>
+        private async Task AutoScanAsync()
+        {
+            if (_allMods.Count > 0 || BtnScan.IsEnabled == false) return;
+            await Task.Delay(300);
+            var sources = GetSelectedSources().ToList();
+            if (sources.Count == 0) { Log("未找到可扫描的来源目录，请检查设置。"); return; }
+            SetProgress("启动扫描…", 0);
+            var mods = await Task.Run(() =>
+            {
+                var sc = new ModScanner();
+                sc.ScanAll(sources);
+                return sc;
+            });
+            _scanner.Mods.Clear();
+            foreach (var m in mods.Mods) _scanner.Mods.Add(m);
+            _allMods = mods.Mods.OrderByDescending(m => m.AboutParsed)
+                .ThenBy(m => m.Source == ModSource.Workshop ? m.PublishedFileId : m.Name)
+                .ThenBy(m => m.Name)
+                .ToList();
+            ApplyFilter();
+            Log($"自动扫描完成：{mods.ParsedOk} 个 Mod（用时 {mods.ScanSeconds:F1}s）。");
+            foreach (var g in _allMods.GroupBy(m => m.Source).OrderBy(g => g.Key))
+                Log($"  {g.Key}: {g.Count()} 个");
+            SetProgress("就绪", 0);
         }
 
         private async Task WarmCloudGlossaryAsync()

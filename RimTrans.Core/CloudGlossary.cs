@@ -9,7 +9,7 @@ namespace RimTrans.Core
     /// <summary>
     /// 云端词库：从 GitHub 仓库拉取官方译名词库（defName→中文，按 DefType）。
     /// 仓库更新即可让所有用户词库热更新，无需发软件新版本。
-    /// 缓存到 %APPDATA%\RimTrans\cloud-glossary.csv，7 天自动刷新，也可手动刷新。
+    /// 缓存到 %APPDATA%\RimTranslator\cloud-glossary.csv，7 天自动刷新，也可手动刷新。
     /// </summary>
     public static class CloudGlossary
     {
@@ -17,7 +17,7 @@ namespace RimTrans.Core
         public const string RepoPage = "https://github.com/Maiya0126/rimtranslator/tree/main/glossary";
 
         private static string CachePath =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTrans", "cloud-glossary.csv");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTranslator", "cloud-glossary.csv");
 
         public class Entry
         {

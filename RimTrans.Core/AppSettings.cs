@@ -20,7 +20,31 @@ namespace RimTrans.Core
         public string AiModel { get; set; } = "Default";
 
         private static string SettingsPath =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTrans", "settings.json");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTranslator", "settings.json");
+
+        /// <summary>旧目录名迁移：RimTrans → RimTranslator（老用户升级无感）。</summary>
+        public static void MigrateLegacyDir()
+        {
+            try
+            {
+                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string oldDir = Path.Combine(appData, "RimTrans");
+                string newDir = Path.Combine(appData, "RimTranslator");
+                if (Directory.Exists(oldDir) && !Directory.Exists(newDir))
+                {
+                    Directory.Move(oldDir, newDir);
+                }
+                else if (Directory.Exists(oldDir))
+                {
+                    foreach (var f in Directory.EnumerateFiles(oldDir))
+                    {
+                        string dest = Path.Combine(newDir, Path.GetFileName(f));
+                        if (!File.Exists(dest)) File.Copy(f, dest);
+                    }
+                }
+            }
+            catch { }
+        }
 
         public static AppSettings Load()
         {

@@ -9,5 +9,9 @@ namespace RimTrans.App;
 /// </summary>
 public partial class App : Application
 {
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        RimTrans.Core.AppSettings.MigrateLegacyDir();
+        base.OnStartup(e);
+    }
 }
-
