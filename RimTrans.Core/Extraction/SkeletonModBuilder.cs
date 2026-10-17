@@ -24,7 +24,6 @@ namespace RimTrans.Core.Extraction
 
             Directory.CreateDirectory(Path.Combine(targetDir, "About"));
             Directory.CreateDirectory(Path.Combine(targetDir, "Languages", options.Language));
-            Directory.CreateDirectory(Path.Combine(targetDir, "Languages", "English"));
 
             // 描述：保留原 Mod 描述 + 署名原作者与本翻译
             string descBody = string.IsNullOrWhiteSpace(sourceMod.Description)

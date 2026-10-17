@@ -66,8 +66,9 @@ namespace RimTrans.Core.AI
             return null;
         }
 
-        /// <summary>写回：只处理 glossary/ai/edited 且 Final 非空的项；TODO/failed 原样保留。</summary>
-        public static int WriteBack(IEnumerable<TranslationItem> items)
+        /// <summary>写回：只处理 glossary/ai/edited 且 Final 非空的项；TODO/failed 原样保留。
+        /// skipBackup：独立汉化Mod 等全新生成场景，无需 .bak（被备份的只是本工具刚生成的模板）。</summary>
+        public static int WriteBack(IEnumerable<TranslationItem> items, bool skipBackup = false)
         {
             int written = 0;
             foreach (var group in items.Where(i => IsWritable(i)).GroupBy(i => i.File))
@@ -89,7 +90,7 @@ namespace RimTrans.Core.AI
                     }
                     if (changed)
                     {
-                        Extraction.XmlIO.BackupFile(group.Key);
+                        if (!skipBackup) Extraction.XmlIO.BackupFile(group.Key);
                         File.WriteAllText(group.Key,
                             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" + doc.ToString().Replace("&gt;", ">"),
                             new UTF8Encoding(true));

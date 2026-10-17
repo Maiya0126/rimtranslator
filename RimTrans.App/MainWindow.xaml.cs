@@ -379,6 +379,8 @@ namespace RimTrans.App
                     {
                         string skelDir = Path.Combine(outDir, SafeDirName(mod.Name));
                         SkeletonModBuilder.Build(skelDir, mod, options, author);
+                        // 提取/DefInjected 的输出根 = 骨架 Mod 自己的目录（而不是保存目录本身）
+                        options.CustomDir = skelDir;
                         Log($"  已生成独立汉化Mod骨架：{skelDir}");
                     }
 
@@ -410,8 +412,7 @@ namespace RimTrans.App
                     string languagesRoot = useSkeleton
                         ? Path.Combine(outDir, SafeDirName(mod.Name), "Languages")
                         : Path.Combine(mod.RootDir, "Languages");
-                    var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(languagesRoot, options.Language));
-                    if (items.Count == 0)
+                    var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(languagesRoot, options.Language));                    if (items.Count == 0)
                     {
                         Log("  没有 TODO 条目，无需翻译。");
                         continue;
@@ -428,7 +429,7 @@ namespace RimTrans.App
                     Log($"  翻译完成：术语 {g}，AI {a}，失败 {f}。打开审阅窗口…");
                     SetProgress("审阅中", 100);
 
-                    var review = new ReviewWindow(items, msg => Log(msg)) { Owner = this };
+                    var review = new ReviewWindow(items, msg => Log(msg), skipBackup: useSkeleton) { Owner = this };
                     review.ShowDialog();
                     Log($"  {mod.Name} 翻译流程结束。");
                 }
@@ -714,7 +715,7 @@ namespace RimTrans.App
 
         private async void CheckForUpdate()
         {
-            Log("检查更新：当前 v1.2.7。");
+            Log("检查更新：当前 v1.2.8。");
             try
             {
                 // 更新源：GitHub Releases latest API（仓库发布后启用）
@@ -727,13 +728,13 @@ namespace RimTrans.App
                     using var doc = System.Text.Json.JsonDocument.Parse(json);
                     string tag = doc.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() ?? "" : "";
                     string url = doc.RootElement.TryGetProperty("html_url", out var u) ? u.GetString() ?? "" : "";
-                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.2.7")
+                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.2.8")
                     {
                         if (MessageBox.Show(this, $"发现新版本 {tag}，是否打开下载页？", "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
                         return;
                     }
-                    MessageBox.Show(this, $"当前已是最新版本（v1.2.7）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(this, $"当前已是最新版本（v1.2.8）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {

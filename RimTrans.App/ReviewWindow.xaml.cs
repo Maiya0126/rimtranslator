@@ -11,12 +11,14 @@ namespace RimTrans.App
     {
         private readonly List<TranslationItem> _items;
         private readonly Action<string> _log;
+        private readonly bool _skipBackup;
 
-        public ReviewWindow(List<TranslationItem> items, Action<string> log)
+        public ReviewWindow(List<TranslationItem> items, Action<string> log, bool skipBackup = false)
         {
             InitializeComponent();
             _items = items;
             _log = log;
+            _skipBackup = skipBackup;
             Grid.ItemsSource = _items;
             UpdateSummary();
         }
@@ -51,8 +53,10 @@ namespace RimTrans.App
         {
             Grid.CommitEdit(DataGridEditingUnit.Row, true);
             // 用户编辑过的条目标记为 edited
-            int written = TodoScanner.WriteBack(_items);
-            _log($"已写回 {written} 条译文（覆盖文件自动生成 .bak 备份）。");
+            int written = TodoScanner.WriteBack(_items, _skipBackup);
+            _log(_skipBackup
+                ? $"已写回 {written} 条译文（独立汉化Mod，全新文件，无需备份）。"
+                : $"已写回 {written} 条译文（覆盖文件自动生成 .bak 备份）。");
             MessageBox.Show(this, $"写入完成：{written} 条。", "完成", MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
         }

@@ -65,7 +65,12 @@ namespace RimTrans.Core.Defs
             if (!Directory.Exists(defInjectedDir)) Directory.CreateDirectory(defInjectedDir);
             foreach (var f in new DirectoryInfo(defInjectedDir).GetFiles("*.xml", SearchOption.AllDirectories))
             {
-                try { XmlIO.BackupFile(f.FullName); f.Delete(); } catch (Exception ex) { logger.Error($"无法删除 {f.Name}: {ex.Message}"); }
+                try
+                {
+                    if (options.Mode != OutputMode.SkeletonMod) XmlIO.BackupFile(f.FullName);
+                    f.Delete();
+                }
+                catch (Exception ex) { logger.Error($"无法删除 {f.Name}: {ex.Message}"); }
             }
 
             var byType = defs.GroupBy(d => d.DefTypeName, StringComparer.OrdinalIgnoreCase);

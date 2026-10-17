@@ -8,15 +8,25 @@ namespace RimTrans.Core.AI
 {
     public class TranslationItem
     {
-        public int Id;
-        public string Source = "";
-        public string File = "";
-        public string Key = "";
-        public string? GlossaryMatch;
-        public string? GlossaryTranslation;
-        public string? AiTranslation;
-        public string Final = "";
-        public string Status = "TODO"; // TODO / glossary / ai / failed / edited
+        public int Id { get; set; }
+        public string Source { get; set; } = "";
+        public string File { get; set; } = "";
+        public string Key { get; set; } = "";
+        public string? GlossaryMatch { get; set; }
+        public string? GlossaryTranslation { get; set; }
+        public string? AiTranslation { get; set; }
+        public string Final { get; set; } = "";
+        public string Status { get; set; } = "TODO"; // TODO / glossary / ai / failed / edited
+
+        /// <summary>审阅界面显示用的状态中文名。</summary>
+        public string StatusDisplay => Status switch
+        {
+            "glossary" => "术语回填",
+            "ai" => "AI 翻译",
+            "failed" => "失败",
+            "edited" => "已编辑",
+            _ => "未处理",
+        };
     }
 
     /// <summary>
@@ -39,7 +49,7 @@ namespace RimTrans.Core.AI
             IProgress<(int done, int total, string stage)>? progress = null)
         {
             int done = 0;
-            // 1. 术语回填（自定义词库 > 云端 defName 官方词库）
+            // 1. 术语回填（自定义词库 > 云端 defName 官方词库）——占整体 10%
             var pending = new List<TranslationItem>();
             foreach (var item in items)
             {
@@ -60,19 +70,26 @@ namespace RimTrans.Core.AI
                 }
                 if (!hit) pending.Add(item);
                 done++;
-                progress?.Report((done, items.Count, "术语匹配"));
+                progress?.Report((done * 10 / Math.Max(1, items.Count), 100, $"术语匹配 {done}/{items.Count}"));
             }
 
-            if (pending.Count == 0) return items;
+            if (pending.Count == 0)
+            {
+                progress?.Report((100, 100, "术语匹配完成"));
+                return items;
+            }
 
-            // 2. AI 批量（每批 20 条）
+            // 2. AI 批量（每批 20 条）——占整体 90%（10% → 100% 线性推进）
             const int batchSize = 20;
             var batches = pending.Chunk(batchSize).ToList();
+            int aiTotal = pending.Count;
+            int aiDone = 0;
             int batchDone = 0;
             foreach (var batch in batches)
             {
                 var list = batch.ToList();
-                progress?.Report((done, items.Count, $"AI 翻译批次 {batchDone + 1}/{batches.Count}"));
+                progress?.Report((10 + aiDone * 90 / aiTotal, 100,
+                    $"AI 翻译 {aiDone}/{aiTotal}（批次 {batchDone + 1}/{batches.Count}）"));
                 string userPrompt = BuildBatchPrompt(list, glossary);
                 string? reply = null;
                 for (int attempt = 0; attempt < 2 && reply == null; attempt++)
@@ -95,8 +112,9 @@ namespace RimTrans.Core.AI
                     ParseBatchReply(reply, list);
                 }
                 batchDone++;
-                done += list.Count;
-                progress?.Report((done, items.Count, $"AI 翻译批次 {batchDone}/{batches.Count}"));
+                aiDone += list.Count;
+                progress?.Report((10 + aiDone * 90 / aiTotal, 100,
+                    $"AI 翻译 {aiDone}/{aiTotal}（批次 {batchDone}/{batches.Count}）"));
             }
             return items;
         }

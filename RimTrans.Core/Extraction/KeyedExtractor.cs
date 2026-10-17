@@ -40,7 +40,8 @@ namespace RimTrans.Core.Extraction
             foreach (var langRoot in languagesDirs)
             {
                 string languageFolderPath = Path.Combine(outputRoot(langRoot), options.Language);
-                ExtractSingle(mod, options, translations, languageFolderPath, Path.GetDirectoryName(languageFolderPath)!, writtenUnused, result, logger);
+                // English 源永远取自源 Mod 的 Languages（输出目录里没有 English）
+                ExtractSingle(mod, options, translations, languageFolderPath, langRoot, writtenUnused, result, logger);
             }
             return result;
         }
@@ -111,10 +112,23 @@ namespace RimTrans.Core.Extraction
                 return;
             }
 
+            // 输出根 = 目标语言目录；English 源文件复制到目标语言目录作为模板
+            // （汉化 Mod 不需要单独的 English 目录，英文留在源 Mod 里）
             if (!Directory.Exists(keyedDir)) Directory.CreateDirectory(keyedDir);
-            foreach (var f in new DirectoryInfo(keyedDir).GetFiles("*.xml", SearchOption.AllDirectories))
+            if (options.Mode != OutputMode.SkeletonMod)
             {
-                try { XmlIO.BackupFile(f.FullName); f.Delete(); } catch (Exception ex) { logger.Error($"无法删除 {f.Name}: {ex.Message}"); }
+                foreach (var f in new DirectoryInfo(keyedDir).GetFiles("*.xml", SearchOption.AllDirectories))
+                {
+                    try { XmlIO.BackupFile(f.FullName); f.Delete(); } catch (Exception ex) { logger.Error($"无法删除 {f.Name}: {ex.Message}"); }
+                }
+            }
+            else
+            {
+                // skeleton：上次运行遗留的目标文件直接删除重建（本工具自己生成的模板，无需备份）
+                foreach (var f in new DirectoryInfo(keyedDir).GetFiles("*.xml", SearchOption.AllDirectories))
+                {
+                    try { f.Delete(); } catch (Exception ex) { logger.Error($"无法删除 {f.Name}: {ex.Message}"); }
+                }
             }
 
             foreach (var f in englishFiles)
@@ -132,7 +146,7 @@ namespace RimTrans.Core.Extraction
                 }
             }
 
-            var targetFiles = new DirectoryInfo(keyedDir).GetFiles("*.xml", SearchOption.AllDirectories);
+            var targetFiles = new DirectoryInfo(keyedDir).GetFiles("*.xml", SearchOption.AllDirectories).ToList();
             foreach (var file in targetFiles)
             {
                 try
