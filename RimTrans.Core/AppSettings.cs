@@ -82,15 +82,19 @@ namespace RimTrans.Core
             return settings;
         }
 
-        /// <summary>从工坊目录反推游戏本体：.../workshop/content/294100 → 同库 common/RimWorld/{Mods,Data}。</summary>
+        /// <summary>从工坊目录反推游戏本体：.../workshop/content/294100 → 同库 common/RimWorld/{Mods,Data}。兼容 1.7 Waylith 自研引擎安装目录名。</summary>
         internal static string? GuessLocalMods(string? workshopDir)
         {
             if (string.IsNullOrEmpty(workshopDir)) return null;
             try
             {
                 string common = Path.GetFullPath(Path.Combine(workshopDir, "..", "..", "..", "..", "common"));
-                string mods = Path.Combine(common, "RimWorld", "Mods");
-                return Directory.Exists(mods) ? mods : null;
+                foreach (var name in new[] { "RimWorld", "RimWorld Waylith", "RimWorldWaylith" })
+                {
+                    string mods = Path.Combine(common, name, "Mods");
+                    if (Directory.Exists(mods)) return mods;
+                }
+                return null;
             }
             catch { return null; }
         }
@@ -101,8 +105,12 @@ namespace RimTrans.Core
             try
             {
                 string common = Path.GetFullPath(Path.Combine(workshopDir, "..", "..", "..", "..", "common"));
-                string data = Path.Combine(common, "RimWorld", "Data");
-                return Directory.Exists(data) ? data : null;
+                foreach (var name in new[] { "RimWorld", "RimWorld Waylith", "RimWorldWaylith" })
+                {
+                    string data = Path.Combine(common, name, "Data");
+                    if (Directory.Exists(data)) return data;
+                }
+                return null;
             }
             catch { return null; }
         }

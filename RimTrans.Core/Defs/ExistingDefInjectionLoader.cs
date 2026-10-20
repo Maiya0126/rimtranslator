@@ -11,15 +11,24 @@ namespace RimTrans.Core.Defs
     /// 从目标语言 DefInjected 目录收集既有注入（离线替代 DefInjectionPackage 注入词典）。
     /// 对齐 AddDataFromFile：TODO→占位、li 列表→全列表注入、rep 旧语法、\n 处理。
     /// 返回 normalizedPath → 译文（含全列表语法还原为 li 文本 "\\n" 连接）。
+    /// 语言目录双名兼容：完整名（本工具输出）与纯名（原 Mod 自带）合并读取，完整名优先。
     /// </summary>
     public static class ExistingDefInjectionLoader
     {
         public static Dictionary<string, string> Load(string languagesDir, string language)
         {
             var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            string baseDir = Path.Combine(languagesDir, language, "DefInjected");
-            if (!Directory.Exists(baseDir)) return dict;
+            foreach (var langDir in RimTrans.Core.AI.TodoScanner.LanguageDirs(languagesDir, language))
+            {
+                string baseDir = Path.Combine(langDir, "DefInjected");
+                if (!Directory.Exists(baseDir)) continue;
+                LoadFromDir(baseDir, dict);
+            }
+            return dict;
+        }
 
+        internal static void LoadFromDir(string baseDir, Dictionary<string, string> dict)
+        {
             foreach (var file in Directory.EnumerateFiles(baseDir, "*.xml", SearchOption.AllDirectories))
             {
                 try
@@ -53,7 +62,6 @@ namespace RimTrans.Core.Defs
                 {
                 }
             }
-            return dict;
         }
 
         private static string ProcessedPath(string path)

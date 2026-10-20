@@ -19,6 +19,14 @@ namespace RimTrans.Core.Extraction
         public string GameDataDir { get; set; } = "";
         public bool SkipBackup { get; set; }
 
+        /// <summary>
+        /// 目标语言完整输出文件夹名（如 "ChineseSimplified (简体中文)"，与游戏 Data tar 名一致）。
+        /// 由 MainWindow 在启动提取前填充；为空时退回 Language 纯名（兼容旧调用）。
+        /// </summary>
+        public string LanguageFolder { get; set; } = "";
+
+        public string LanguageFolderResolved => string.IsNullOrWhiteSpace(LanguageFolder) ? Language : LanguageFolder;
+
         public const string GeneratorName = "边缘译者 RimTranslator";
     }
 

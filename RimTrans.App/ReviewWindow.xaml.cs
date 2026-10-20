@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using RimTrans.Core;
 using RimTrans.Core.AI;
 
 namespace RimTrans.App
@@ -12,13 +14,19 @@ namespace RimTrans.App
         private readonly List<TranslationItem> _items;
         private readonly Action<string> _log;
         private readonly bool _skipBackup;
+        private readonly BatchTranslator? _translator;
+        private readonly Glossary? _glossary;
 
-        public ReviewWindow(List<TranslationItem> items, Action<string> log, bool skipBackup = false)
+        public ReviewWindow(List<TranslationItem> items, Action<string> log, bool skipBackup = false,
+            BatchTranslator? translator = null, Glossary? glossary = null)
         {
             InitializeComponent();
             _items = items;
             _log = log;
             _skipBackup = skipBackup;
+            _translator = translator;
+            _glossary = glossary;
+            if (translator == null) BtnRetryFailed.IsEnabled = false;
             Grid.ItemsSource = _items;
             UpdateSummary();
         }
@@ -29,13 +37,36 @@ namespace RimTrans.App
             int ai = _items.Count(i => i.Status == "ai");
             int failed = _items.Count(i => i.Status == "failed");
             int todo = _items.Count(i => i.Status == "TODO");
-            TxtSummary.Text = $"共 {_items.Count} 条：术语回填 {glossary}，AI 翻译 {ai}，失败 {failed}，未处理 TODO {todo}。" +
+            string mods = _items.Select(i => i.ModName).Where(m => m.Length > 0).Distinct().Count().ToString();
+            TxtSummary.Text = $"共 {_items.Count} 条（{mods} 个 Mod）：术语回填 {glossary}，AI 翻译 {ai}，失败 {failed}，未处理 TODO {todo}。" +
                 "双击译文单元格可编辑；只写入非空译文，TODO/失败项保持原样。";
         }
 
-        private void BtnRetryFailed_Click(object sender, RoutedEventArgs e)
+        private async void BtnRetryFailed_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, "请关闭本窗口后重新执行翻译流程。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (_translator == null) return;
+            int failedCount = _items.Count(i => i.Status == "failed");
+            if (failedCount == 0)
+            {
+                MessageBox.Show(this, "没有失败项。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            BtnRetryFailed.IsEnabled = false;
+            try
+            {
+                _log($"审阅窗原地重试 {failedCount} 条失败项…");
+                await Task.Run(() => _translator.RetryFailedAsync(_items, _glossary));
+                Grid.Items.Refresh();
+                UpdateSummary();
+                int stillFailed = _items.Count(i => i.Status == "failed");
+                MessageBox.Show(this, $"重试完成：成功 {failedCount - stillFailed} 条，仍失败 {stillFailed} 条。", "重试", MessageBoxButton.OK,
+                    stillFailed > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
+                _log($"重试完成：成功 {failedCount - stillFailed}，仍失败 {stillFailed}。");
+            }
+            finally
+            {
+                BtnRetryFailed.IsEnabled = true;
+            }
         }
 
         private void BtnMarkAllTodo_Click(object sender, RoutedEventArgs e)

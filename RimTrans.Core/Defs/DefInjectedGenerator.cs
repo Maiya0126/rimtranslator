@@ -52,11 +52,11 @@ namespace RimTrans.Core.Defs
                     string l = Path.Combine(dir, "Languages");
                     if (Directory.Exists(l)) languagesDirs.Add(l);
                 }
-                Directory.CreateDirectory(Path.Combine(outputBase, options.Language, "DefInjected"));
+                Directory.CreateDirectory(Path.Combine(outputBase, options.LanguageFolderResolved, "DefInjected"));
             }
-            string defInjectedDir = Path.Combine(outputBase, options.Language, "DefInjected");
+            string defInjectedDir = Path.Combine(outputBase, options.LanguageFolderResolved, "DefInjected");
 
-            string? defLinked = Path.Combine(outputBase, options.Language, "DefLinked");
+            string? defLinked = Path.Combine(outputBase, options.LanguageFolderResolved, "DefLinked");
             if (Directory.Exists(defLinked) && !Directory.Exists(defInjectedDir))
             {
                 Directory.Move(defLinked, defInjectedDir);

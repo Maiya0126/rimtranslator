@@ -39,7 +39,7 @@ namespace RimTrans.Core.Extraction
             var writtenUnused = new HashSet<KeyedReplacement>();
             foreach (var langRoot in languagesDirs)
             {
-                string languageFolderPath = Path.Combine(outputRoot(langRoot), options.Language);
+                string languageFolderPath = Path.Combine(outputRoot(langRoot), options.LanguageFolderResolved);
                 // English 源永远取自源 Mod 的 Languages（输出目录里没有 English）
                 ExtractSingle(mod, options, translations, languageFolderPath, langRoot, writtenUnused, result, logger);
             }

@@ -14,22 +14,71 @@ namespace RimTrans.Core
     }
 
     /// <summary>
-    /// 术语库：官方库（从 Data 官方翻译构建，只读）+ 玩家自定义词库（%APPDATA%\RimTrans\glossary-<语言>.json，可增删改）。
-    /// 匹配时自定义词库优先于官方库。
+    /// 术语库：自定义词库（%APPDATA%\RimTranslator\glossary-<语言>.json，玩家手动增删改，最高优先）+
+    /// 本地官方库（从 Data 官方翻译构建，TryAdd 不覆盖自定义）。
+    /// 翻译优先级：自定义 &gt; 云端词库（CloudGlossary，维护者持续更新）&gt; 本地官方库。
     /// </summary>
     public class Glossary
     {
         private readonly Dictionary<string, string> _map = new(StringComparer.OrdinalIgnoreCase);
-        public int Count => _map.Count;
+        private readonly Dictionary<string, string> _customMap = new(StringComparer.OrdinalIgnoreCase);
+        public int Count => _map.Count + _customMap.Count;
+
+        /// <summary>玩家自定义词条（最高优先级，可顶掉官方/云端译名）。</summary>
+        public void AddCustomRange(IEnumerable<GlossaryEntry> entries)
+        {
+            foreach (var e in entries)
+                if (!string.IsNullOrWhiteSpace(e.En) && !string.IsNullOrWhiteSpace(e.Translation))
+                {
+                    _customMap.TryAdd(e.En.Trim(), e.Translation.Trim());
+                    _map.TryAdd(e.En.Trim(), e.Translation.Trim());
+                }
+        }
 
         public void AddRange(IEnumerable<GlossaryEntry> entries)
         {
             foreach (var e in entries)
                 if (!string.IsNullOrWhiteSpace(e.En) && !string.IsNullOrWhiteSpace(e.Translation))
-                    _map[e.En.Trim()] = e.Translation.Trim();
+                    _map.TryAdd(e.En.Trim(), e.Translation.Trim());
         }
 
-        public bool TryMatch(string en, out string translation) => _map.TryGetValue(en ?? "", out translation!);
+        public bool TryMatch(string? en, out string translation)
+        {
+            if (!string.IsNullOrWhiteSpace(en) && _map.TryGetValue(en.Trim(), out translation!)) return true;
+            foreach (var v in Variants(en))
+                if (_map.TryGetValue(v, out translation!)) return true;
+            translation = null!;
+            return false;
+        }
+
+        /// <summary>仅匹配玩家自定义词条（用于比云端更高的一级优先）。</summary>
+        public bool TryMatchCustom(string? en, out string translation)
+        {
+            if (!string.IsNullOrWhiteSpace(en) && _customMap.TryGetValue(en.Trim(), out translation!)) return true;
+            foreach (var v in Variants(en))
+                if (_customMap.TryGetValue(v, out translation!)) return true;
+            translation = null!;
+            return false;
+        }
+
+        public static IEnumerable<string> Variants(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) yield break;
+            string t = s.Trim();
+            string lower = t.ToLowerInvariant();
+            string baseWord = t;
+            foreach (var article in new[] { "the ", "a ", "an " })
+            {
+                if (lower.StartsWith(article, StringComparison.Ordinal))
+                {
+                    baseWord = t[article.Length..].Trim();
+                    if (baseWord.Length > 0) yield return baseWord;
+                    break;
+                }
+            }
+            if (baseWord.Length > 3 && baseWord.EndsWith('s') && !baseWord.EndsWith("ss", StringComparison.Ordinal))
+                yield return baseWord[..^1];
+        }
 
         public IEnumerable<GlossaryEntry> Entries
         {
@@ -60,6 +109,58 @@ namespace RimTrans.Core
             string path = CustomPath(language);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path, JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        /// <summary>导出词库为 JSON（供汉化组互传）。format: rimtrans-glossary-v1。</summary>
+        public static void ExportJson(string path, List<GlossaryEntry> entries, string language)
+        {
+            var payload = new
+            {
+                format = "rimtrans-glossary-v1",
+                language,
+                exportedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                count = entries.Count,
+                entries = entries.Select(e => new { en = e.En, zh = e.Translation, note = e.Note }),
+            };
+            File.WriteAllText(path, JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        /// <summary>导入词库 JSON（本工具导出格式）。返回 (新增, 跳过重复)。格式不符返回 null。</summary>
+        public static (int added, int skipped)? ImportJson(string path, List<GlossaryEntry> into)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(path));
+                var root = doc.RootElement;
+                if (root.TryGetProperty("format", out var fmt) && fmt.GetString() != "rimtrans-glossary-v1")
+                    return null;
+                if (!root.TryGetProperty("entries", out var arr)) return null;
+                var seen = new HashSet<string>(into.Select(e => e.En), StringComparer.OrdinalIgnoreCase);
+                int added = 0, skipped = 0;
+                foreach (var el in arr.EnumerateArray())
+                {
+                    string? en = el.TryGetProperty("en", out var e) ? e.GetString() : null;
+                    string? zh = el.TryGetProperty("zh", out var z) ? z.GetString() : null;
+                    if (string.IsNullOrWhiteSpace(en) || string.IsNullOrWhiteSpace(zh)) { skipped++; continue; }
+                    if (seen.Add(en.Trim()))
+                    {
+                        into.Add(new GlossaryEntry
+                        {
+                            En = en.Trim(),
+                            Translation = zh.Trim(),
+                            Note = el.TryGetProperty("note", out var n) ? n.GetString() ?? "" : "",
+                            Source = "导入",
+                        });
+                        added++;
+                    }
+                    else skipped++;
+                }
+                return (added, skipped);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         /// <summary>

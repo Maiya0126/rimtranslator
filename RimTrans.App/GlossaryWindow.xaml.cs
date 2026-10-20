@@ -92,6 +92,55 @@ namespace RimTrans.App
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        private void BtnExportJson_Click(object sender, RoutedEventArgs e)
+        {
+            Grid.CommitEdit(DataGridEditingUnit.Row, true);
+            var valid = _entries.Where(x => !string.IsNullOrWhiteSpace(x.En) && !string.IsNullOrWhiteSpace(x.Translation)).ToList();
+            if (valid.Count == 0)
+            {
+                MessageBox.Show(this, "词库为空，无可导出内容。", "导出", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "导出词库 JSON",
+                Filter = "词库 JSON (*.json)|*.json",
+                FileName = $"rimtrans-glossary-{_settings.TargetLanguage}-{DateTime.Now:yyyyMMdd}.json",
+            };
+            if (dlg.ShowDialog(this) != true) return;
+            try
+            {
+                Glossary.ExportJson(dlg.FileName, valid, _settings.TargetLanguage);
+                MessageBox.Show(this, $"已导出 {valid.Count} 条 →\n{dlg.FileName}", "导出完成", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "导出失败：" + ex.Message, "导出", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void BtnImportJson_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "导入词库 JSON",
+                Filter = "词库 JSON (*.json)|*.json",
+            };
+            if (dlg.ShowDialog(this) != true) return;
+            var result = Glossary.ImportJson(dlg.FileName, _entries);
+            if (result == null)
+            {
+                MessageBox.Show(this, "文件格式不符（应为 RimTranslator 导出的词库 JSON）。", "导入失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            var (added, skipped) = result.Value;
+            Grid.Items.Refresh();
+            UpdateStat();
+            MessageBox.Show(this,
+                $"导入完成：新增 {added} 条，跳过重复 {skipped} 条。\n记得点「保存」写入词库。", "导入完成",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
         private async void BtnLoadOfficial_Click(object sender, RoutedEventArgs e)
         {
             BtnLoadOfficial.IsEnabled = false;

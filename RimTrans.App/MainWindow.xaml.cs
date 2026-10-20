@@ -354,6 +354,7 @@ namespace RimTrans.App
                 GameDataDir = _settings.GameDataDir,
                 Mode = useSkeleton ? OutputMode.SkeletonMod : OutputMode.ModDir,
                 CustomDir = outDir,
+                LanguageFolder = GameLanguageFinder.ResolveOutputFolderName(_settings.GameDataDir, _settings.TargetLanguage),
             };
 
             var logger = new UiLogger(this);
@@ -362,30 +363,38 @@ namespace RimTrans.App
             BtnTranslateSkeleton.IsEnabled = false;
             try
             {
-                // 术语库：自定义词库 + 官方库
-                Log("构建术语库（自定义 + 官方）…");
+                // 术语库优先级：自定义 > 云端（维护者持续更新）> 官方
+                Log("构建术语库（自定义 + 云端 + 官方）…");
                 SetProgress("构建术语库…", 2);
                 var glossary = new Glossary();
-                glossary.AddRange(Glossary.LoadCustom(_settings.TargetLanguage));
+                glossary.AddCustomRange(Glossary.LoadCustom(_settings.TargetLanguage));
                 int customCount = glossary.Count;
+                int cloudCount = CloudGlossary.Loaded ? CloudGlossary.Map.Count : 0;
+                if (cloudCount == 0)
+                {
+                    try { await Task.Run(() => CloudGlossary.FetchAsync()); cloudCount = CloudGlossary.Map.Count; } catch { }
+                }
                 var official = await Task.Run(() => OfficialGlossaryBuilder.Build(_settings.GameDataDir, _settings.TargetLanguage));
                 glossary.AddRange(official);
-                Log($"术语库就绪：自定义 {customCount} 条，官方 {official.Count} 条");
+                Log($"术语库就绪：自定义 {customCount} 条，云端 {cloudCount} 条，官方 {official.Count} 条（优先级：自定义 > 云端 > 官方）");
 
+                // A1 批量队列：全部 Mod 提取完 → 统一术语+AI → 一张大审阅表 → 一次写入
+                var allItems = new List<RimTrans.Core.AI.TranslationItem>();
+                var modCount = selected.Count;
+                int step = 0;
                 foreach (var mod in selected)
                 {
-                    Log($"── 翻译 [{mod.SourceDisplay}] {mod.Name}");
+                    step++;
+                    Log($"── [{step}/{modCount}] 提取 [{mod.SourceDisplay}] {mod.Name}");
                     if (useSkeleton)
                     {
                         string skelDir = Path.Combine(outDir, SafeDirName(mod.Name));
                         SkeletonModBuilder.Build(skelDir, mod, options, author);
-                        // 提取/DefInjected 的输出根 = 骨架 Mod 自己的目录（而不是保存目录本身）
                         options.CustomDir = skelDir;
                         Log($"  已生成独立汉化Mod骨架：{skelDir}");
                     }
 
-                    // 1. 提取（Keyed + DefInjected）
-                    SetProgress($"提取：{mod.Name}", 5);
+                    SetProgress($"提取 {step}/{modCount}：{mod.Name}", step * 5.0 / modCount);
                     var keyedResult = await Task.Run(() => KeyedExtractor.Extract(mod, options, LoadExisting(mod, options), logger));
                     var defDirs = mod.GetContentDirs(options.GameVersion);
                     var patchDirs = ExtractContext.GetPatchDirs(mod, options.GameVersion);
@@ -408,31 +417,45 @@ namespace RimTrans.App
                     var defResult = await Task.Run(() => DefInjectedGenerator.Generate(mod, options, defs, defExisting, logger));
                     Log($"  提取完成：Keyed {keyedResult.KeysTodo} 条 TODO，DefInjected {defResult.KeysTodo} 条 TODO");
 
-                    // 2. 扫描 TODO → 术语回填 + AI
                     string languagesRoot = useSkeleton
                         ? Path.Combine(outDir, SafeDirName(mod.Name), "Languages")
                         : Path.Combine(mod.RootDir, "Languages");
-                    var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(languagesRoot, options.Language));                    if (items.Count == 0)
+                    var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(languagesRoot, options.Language));
+                    if (items.Count > 0)
                     {
-                        Log("  没有 TODO 条目，无需翻译。");
-                        continue;
+                        foreach (var it in items) it.ModName = mod.Name;
+                        allItems.AddRange(items);
+                        Log($"  待翻译 {items.Count} 条（累计 {allItems.Count}）");
                     }
-                    Log($"  待翻译 {items.Count} 条，开始术语匹配与 AI 翻译…");
-                    var progress = new Progress<(int done, int total, string stage)>(p =>
-                    {
-                        SetProgress($"{p.stage} {p.done}/{p.total}", p.total == 0 ? 0 : p.done * 100.0 / p.total);
-                    });
-                    var translator = new RimTrans.Core.AI.BatchTranslator(aiClient, FriendlyLanguageName(options.Language));
-                    await Task.Run(() => translator.TranslateAsync(items, glossary, progress));
-
-                    int g = items.Count(i => i.Status == "glossary"), a = items.Count(i => i.Status == "ai"), f = items.Count(i => i.Status == "failed");
-                    Log($"  翻译完成：术语 {g}，AI {a}，失败 {f}。打开审阅窗口…");
-                    SetProgress("审阅中", 100);
-
-                    var review = new ReviewWindow(items, msg => Log(msg), skipBackup: useSkeleton) { Owner = this };
-                    review.ShowDialog();
-                    Log($"  {mod.Name} 翻译流程结束。");
+                    else Log("  没有 TODO 条目，无需翻译。");
                 }
+
+                if (allItems.Count == 0)
+                {
+                    Log("所有 Mod 均无 TODO 条目，翻译流程结束。");
+                    SetProgress("就绪（无待翻译内容）", 100);
+                    return;
+                }
+
+                // 统一术语 + AI（3 路并发）
+                Log($"共 {allItems.Count} 条待翻译，开始术语匹配与 AI 翻译（3 路并发）…");
+                var progress = new Progress<(int done, int total, string stage)>(p =>
+                {
+                    SetProgress($"{p.stage} {p.done}/{p.total}", p.total == 0 ? 0 : p.done * 100.0 / p.total);
+                });
+                var translator = new RimTrans.Core.AI.BatchTranslator(aiClient, FriendlyLanguageName(options.Language));
+                await Task.Run(() => translator.TranslateAsync(allItems, glossary, progress));
+
+                int g = allItems.Count(i => i.Status == "glossary"), a = allItems.Count(i => i.Status == "ai"), f = allItems.Count(i => i.Status == "failed");
+                Log($"翻译完成（{modCount} 个 Mod 合计）：术语 {g}，AI {a}，失败 {f}。打开统一审阅窗口…");
+                SetProgress("审阅中", 100);
+
+                var review = new ReviewWindow(allItems, msg => Log(msg), skipBackup: useSkeleton, translator: translator, glossary: glossary)
+                {
+                    Owner = this,
+                };
+                review.ShowDialog();
+                Log($"批量翻译流程结束（{modCount} 个 Mod）。");
                 SetProgress("就绪（翻译流程完成）", 100);
             }
             catch (RimTrans.Core.AI.AiException ex)
@@ -447,7 +470,6 @@ namespace RimTrans.App
                 BtnTranslateSkeleton.IsEnabled = true;
             }
         }
-
         private static string FriendlyLanguageName(string folder) => folder switch
         {
             "ChineseSimplified" => "Simplified Chinese (简体中文)",
@@ -477,6 +499,7 @@ namespace RimTrans.App
                 Language = _settings.TargetLanguage,
                 GameDataDir = _settings.GameDataDir,
                 Mode = OutputMode.ModDir,
+                LanguageFolder = GameLanguageFinder.ResolveOutputFolderName(_settings.GameDataDir, _settings.TargetLanguage),
             };
 
             if (options.Mode == OutputMode.ModDir)
@@ -715,31 +738,44 @@ namespace RimTrans.App
 
         private async void CheckForUpdate()
         {
-            Log("检查更新：当前 v1.2.8。");
+            string current = RimTrans.Core.Updater.CurrentVersion;
+            Log($"检查更新：当前 v{current}…");
             try
             {
-                // 更新源：GitHub Releases latest API（仓库发布后启用）
-                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-                http.DefaultRequestHeaders.Add("User-Agent", "RimTranslator");
-                var resp = await http.GetAsync("https://api.github.com/repos/Maiya0126/rimtranslator/releases/latest");
-                if (resp.IsSuccessStatusCode)
-                {
-                    var json = await resp.Content.ReadAsStringAsync();
-                    using var doc = System.Text.Json.JsonDocument.Parse(json);
-                    string tag = doc.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() ?? "" : "";
-                    string url = doc.RootElement.TryGetProperty("html_url", out var u) ? u.GetString() ?? "" : "";
-                    if (!string.IsNullOrEmpty(tag) && tag.TrimStart('v', 'V') != "1.2.8")
-                    {
-                        if (MessageBox.Show(this, $"发现新版本 {tag}，是否打开下载页？", "检查更新", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
-                        return;
-                    }
-                    MessageBox.Show(this, $"当前已是最新版本（v1.2.8）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
+                var info = await Task.Run(() => RimTrans.Core.Updater.CheckAsync());
+                if (info == null || string.IsNullOrEmpty(info.Tag))
                 {
                     MessageBox.Show(this, "暂时无法获取更新信息（仓库尚未发布或网络不通）。可手动访问 GitHub Releases 页面。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
                 }
+                if (!RimTrans.Core.Updater.IsNewer(info.Tag, current))
+                {
+                    MessageBox.Show(this, $"当前已是最新版本（v{current}）。", "检查更新", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+                string sizeText = info.Size > 0 ? $"（约 {info.Size / 1024 / 1024} MB）" : "";
+                var choice = MessageBox.Show(this,
+                    $"发现新版本 {info.Tag}{sizeText}。\n\n是 — 立即下载并自动更新（下载完成后程序会自动退出替换并重启）\n否 — 打开发布页手动查看",
+                    "检查更新", MessageBoxButton.YesNoCancel, MessageBoxImage.Information);
+                if (choice == MessageBoxResult.No)
+                {
+                    try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(info.HtmlUrl) { UseShellExecute = true }); } catch { }
+                    return;
+                }
+                if (choice != MessageBoxResult.Yes) return;
+
+                // 应用内下载 + 自动替换
+                SetProgress("下载更新…", 0);
+                var progress = new Progress<(long done, long total)>(p =>
+                {
+                    double pct = p.total > 0 ? p.done * 100.0 / p.total : 0;
+                    SetProgress($"下载更新 {p.done / 1024 / 1024}/{p.total / 1024 / 1024} MB", pct);
+                });
+                string downloaded = await Task.Run(() => RimTrans.Core.Updater.DownloadAsync(info, progress));
+                Log($"更新包下载完成：{info.Tag}。程序将退出并自动替换重启…");
+                RimTrans.Core.Updater.LaunchSelfReplace(downloaded,
+                    System.Diagnostics.Process.GetCurrentProcess().Id);
+                Application.Current.Shutdown();
             }
             catch (Exception ex)
             {

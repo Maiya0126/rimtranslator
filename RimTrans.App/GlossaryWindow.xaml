@@ -122,7 +122,7 @@
             <TabItem Header="✏️ 自定义词库（可编辑）">
                 <DockPanel Margin="4,10,4,4">
                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource Hint}"
-                               Text="使用指南：这里是你的私人词库，翻译时优先于官方术语库生效。添加词条后点「保存」持久化（按语言分库，存于 %APPDATA%\RimTrans\）。英文原文与官方译名相同时即为覆盖：例如你觉得官方把某词翻得不好，直接添加同名词条填写你的译法即可顶掉官方译名，无需删除任何东西。"/>
+                               Text="使用指南：这里是你的私人词库，翻译时优先级最高（高于云端与官方术语库）。添加词条后点「保存」持久化（按语言分库，存于 %APPDATA%\RimTranslator\）。英文原文与官方译名相同时即为覆盖：例如你觉得官方把某词翻得不好，直接添加同名词条填写你的译法即可顶掉官方译名，无需删除任何东西。可用「导出JSON / 导入JSON」与其他译者共享词库。"/>
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
                         <Button x:Name="BtnAdd" Content="＋ 添加词条" Click="BtnAdd_Click"/>
                         <Button x:Name="BtnDelete" Content="🗑 删除选中" Margin="8,0,0,0" Click="BtnDelete_Click"/>
@@ -130,6 +130,10 @@
                                 Background="{StaticResource AccentBg}" BorderBrush="{StaticResource Accent}"
                                 Foreground="{StaticResource Accent}" Click="BtnImport_Click"
                                 ToolTip="选择一个汉化包/翻译Mod的 Languages\&lt;语言&gt; 目录（或其中的 Keyed/DefInjected 目录），自动从 EN 注释+译文配对导入词库。旧 Mod 更新后把旧翻译喂进来，大部分条目直接回填不再请求 AI"/>
+                        <Button x:Name="BtnExportJson" Content="📤 导出JSON…" Margin="8,0,0,0" Click="BtnExportJson_Click"
+                                ToolTip="把当前自定义词库导出为 JSON 文件，可发给其他译者/汉化组共享"/>
+                        <Button x:Name="BtnImportJson" Content="📥 导入JSON…" Margin="8,0,0,0" Click="BtnImportJson_Click"
+                                ToolTip="导入其他译者导出的词库 JSON（与本工具导出格式一致），合并进当前词库"/>
                         <Button x:Name="BtnSave" Content="💾 保存" Margin="8,0,0,0" FontWeight="Bold"
                                 Background="{StaticResource AccentBg}" BorderBrush="{StaticResource Accent}"
                                 Foreground="{StaticResource Accent}" Click="BtnSave_Click"/>
@@ -174,7 +178,7 @@
             <TabItem Header="☁️ 云端词库（GitHub）">
                 <DockPanel Margin="4,10,4,4">
                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource Hint}"
-                               Text="维护者发布在 GitHub 仓库的官方译名词库（defName→中文，九千余条，覆盖本体+全部 DLC）。词库更新后所有用户点「从云端刷新」即可热更新，无需等软件版本；无网时使用上次缓存（7 天内不重复拉取）。翻译时与本地官方库同时生效。"/>
+                               Text="维护者发布在 GitHub 仓库的官方译名词库（defName→中文，九千余条，覆盖本体+全部 DLC）。词库更新后所有用户点「从云端刷新」即可热更新，无需等软件版本；无网时使用上次缓存（7 天内不重复拉取）。翻译时优先级：自定义词库 > 云端词库 > 本地官方库。"/>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                         <Button x:Name="BtnCloudRefresh" Content="🔄 从云端刷新" FontWeight="Bold"
                                 Background="{StaticResource AccentBg}" BorderBrush="{StaticResource Accent}"

@@ -1,7 +1,7 @@
 <Window x:Class="RimTrans.App.ReviewWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="审阅译文" Height="700" Width="1100"
+        Title="审阅译文" Height="720" Width="1180"
         WindowStartupLocation="CenterOwner">
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -12,15 +12,17 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock x:Name="TxtSummary" Text="共 0 条" VerticalAlignment="Center" FontWeight="Bold"/>
-            <Button x:Name="BtnRetryFailed" Content="重试失败项" Margin="16,0,0,0" Padding="8,2" Click="BtnRetryFailed_Click"/>
+            <Button x:Name="BtnRetryFailed" Content="重试失败项" Margin="16,0,0,0" Padding="8,2" Click="BtnRetryFailed_Click"
+                    ToolTip="把失败的条目重新送 AI 翻译（无需关闭本窗口）"/>
             <Button x:Name="BtnMarkAllTodo" Content="全部改为TODO(不写)" Margin="8,0,0,0" Padding="8,2" Click="BtnMarkAllTodo_Click"/>
         </StackPanel>
 
         <DataGrid Grid.Row="1" x:Name="Grid" AutoGenerateColumns="False" CanUserAddRows="False"
                   GridLinesVisibility="Horizontal" HeadersVisibility="Column">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="原文(EN)" Binding="{Binding Source}" IsReadOnly="True" Width="340"/>
-                <DataGridTextColumn Header="来源" Binding="{Binding Status}" IsReadOnly="True" Width="70"/>
+                <DataGridTextColumn Header="Mod" Binding="{Binding ModName}" IsReadOnly="True" Width="150"/>
+                <DataGridTextColumn Header="原文(EN)" Binding="{Binding Source}" IsReadOnly="True" Width="320"/>
+                <DataGridTextColumn Header="来源" Binding="{Binding StatusDisplay}" IsReadOnly="True" Width="70"/>
                 <DataGridTextColumn Header="译文（可编辑）" Binding="{Binding Final, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>

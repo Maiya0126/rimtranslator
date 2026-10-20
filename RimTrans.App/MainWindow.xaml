@@ -256,7 +256,7 @@
                                ToolTip="要翻译成什么语言（以 Mod 的 English 为源）"/>
                     <ComboBox x:Name="CmbLanguage" Width="180" SelectionChanged="CmbLanguage_SelectionChanged"/>
                     <Button x:Name="BtnGlossary" Content="📚 词库管理…" Margin="14,0,0,0" Click="BtnGlossary_Click"
-                            ToolTip="官方术语库（只读查询）+ 自定义词库（增删改）；同名词条可覆盖官方译名，翻译时自定义优先"/>
+                            ToolTip="词库优先级：自定义 > 云端 > 官方；同名词条可覆盖官方译名。支持 JSON 导入导出共享"/>
                     <Button x:Name="BtnHelp" Content="❓ 使用教程" Click="BtnHelp_Click"/>
                 </WrapPanel>
             </StackPanel>
@@ -417,7 +417,7 @@
         <Border Grid.Row="5" Background="{StaticResource PanelLight}" BorderBrush="{StaticResource Border}"
                 BorderThickness="0,1,0,0" CornerRadius="0" Padding="12,6">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="边缘译者 RimTranslator v1.2.8" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
+                <TextBlock Text="边缘译者 RimTranslator v1.3.6" VerticalAlignment="Center" Foreground="{StaticResource TextSub}" Margin="0,0,14,0"/>
                 <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" ToolTip="开源仓库：源码 / Issue / Releases">
                     <Hyperlink NavigateUri="https://github.com/Maiya0126/rimtranslator" RequestNavigate="Link_RequestNavigate"
                                Foreground="#24292F">⭐ GitHub 开源</Hyperlink>

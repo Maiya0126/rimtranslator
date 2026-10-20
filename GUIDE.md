@@ -44,7 +44,10 @@
 答：① 使用 PatchOperation 补丁动态产生文本的 Mod，V1.0 暂不解析（约覆盖 90% 的 Mod）；② 跨 Mod 继承的 Def 暂无法离线解析；③ 代码运行时动态注册的 Def 离线抓不到。三者均已在 README 声明，V1.1 逐步支持。
 
 **问：我是 Modder，只做了简中，能翻成日语放回自己的 Mod 吗？**
-答：可以。目标语言选 Japanese，提取翻译后选「原 Mod 目录」输出，即写入你的 Mod 的 `Languages\Japanese\`。
+答：可以。目标语言选 Japanese，提取翻译后选「原 Mod 目录」输出，写入你的 Mod 的 `Languages\Japanese (日本語)\` 完整名目录（与游戏自带语言命名一致）；若 Mod 里已有纯 `Japanese` 目录也不会被覆盖，游戏内二者合并为同一语言、完整名优先生效。
+
+**问：为什么生成的翻译文件夹带括号（如 ChineseSimplified (简体中文)），而不是纯 ChineseSimplified？**
+答：与游戏本体 Data 目录的语言命名完全一致（LoadedLanguage 的 folderName + legacyFolderName 机制）。好处：① 原 Mod 自带的同名纯名文件夹不会被覆盖，不放心随时删掉本工具生成的文件夹即可完全还原；② 游戏内本工具译文优先于原文件夹生效。
 
 **问：AI 翻译质量？**
 答：未命中术语的内容由 AI 按官方本地化风格翻译（内置 30+ 高频官方译名约束 + 命中术语表注入提示词）；所有译文经你审阅后才写盘，可逐条修改。

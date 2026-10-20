@@ -9,16 +9,25 @@ namespace RimTrans.Core.Extraction
     /// <summary>
     /// 从 Mod 的目标语言既有翻译目录收集 KeyedReplacement（离线替代游戏内 keyedReplacements）。
     /// 对齐游戏 LoadedLanguage.LoadFromFile_Keyed：值=="TODO" 视为 placeholder。
+    /// 语言目录双名兼容：完整名（"ChineseSimplified (简体中文)"，本工具输出）与纯名（原 Mod 自带）合并读取，完整名优先。
     /// </summary>
     public static class ExistingTranslationLoader
     {
         public static List<KeyedReplacement> LoadFromLanguagesDir(string languagesDir, string language, string dataDirToExclude)
         {
             var list = new List<KeyedReplacement>();
-            string langDir = Path.Combine(languagesDir, language, "Keyed");
-            if (!Directory.Exists(langDir)) return list;
+            foreach (var langDir in RimTrans.Core.AI.TodoScanner.LanguageDirs(languagesDir, language))
+            {
+                string keyed = Path.Combine(langDir, "Keyed");
+                if (!Directory.Exists(keyed)) continue;
+                LoadFromKeyedDir(keyed, dataDirToExclude, list);
+            }
+            return list;
+        }
 
-            foreach (var file in Directory.EnumerateFiles(langDir, "*.xml", SearchOption.AllDirectories))
+        internal static void LoadFromKeyedDir(string keyedDir, string dataDirToExclude, List<KeyedReplacement> list)
+        {
+            foreach (var file in Directory.EnumerateFiles(keyedDir, "*.xml", SearchOption.AllDirectories))
             {
                 try
                 {
@@ -32,7 +41,7 @@ namespace RimTrans.Core.Extraction
                         {
                             Key = el.Name.ToString(),
                             Value = value,
-                            IsPlaceholder = value == "TODO",
+                            IsPlaceholder = value.Trim() == "TODO",
                             FileSourceFullPath = Path.GetFullPath(file),
                         };
                         if (!string.IsNullOrEmpty(dataDirToExclude) && kr.FileSourceFullPath.Contains(dataDirToExclude, StringComparison.OrdinalIgnoreCase))
@@ -44,7 +53,6 @@ namespace RimTrans.Core.Extraction
                 {
                 }
             }
-            return list;
         }
     }
 }

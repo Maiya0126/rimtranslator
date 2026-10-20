@@ -11,14 +11,43 @@ namespace RimTrans.Core
     /// <summary>
     /// 从游戏官方翻译（Data\<DLC>\Languages\<语言>，tar 或已解压目录）构建 EN→译文 官方术语库。
     /// 只读 Keyed 与 DefInjected 的"完整句/词"条目；带 {0} 占位符的也保留（AI 翻译时占位符必须原样）。
+    /// 构建结果按 Data 目录指纹（各 tar 的大小+修改时间）缓存到 %APPDATA%\RimTranslator\official-glossary-<语言>.json，
+    /// DLC 未变化时秒级加载，无需重复解析全部 tar。
     /// </summary>
     public static class OfficialGlossaryBuilder
     {
         public static List<GlossaryEntry> Build(string dataDir, string language)
         {
-            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (!Directory.Exists(dataDir)) return new();
+            string? cacheFile = null, fingerprint = null;
+            try
+            {
+                fingerprint = ComputeFingerprint(dataDir, language);
+                cacheFile = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RimTranslator",
+                    $"official-glossary-{language}.json");
+                if (File.Exists(cacheFile))
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(cacheFile));
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("fp", out var fp) && fp.GetString() == fingerprint &&
+                        root.TryGetProperty("entries", out var arr))
+                    {
+                        var cached = new List<GlossaryEntry>();
+                        foreach (var el in arr.EnumerateArray())
+                            cached.Add(new GlossaryEntry
+                            {
+                                En = el.GetProperty("en").GetString() ?? "",
+                                Translation = el.GetProperty("zh").GetString() ?? "",
+                                Source = "官方",
+                            });
+                        return cached;
+                    }
+                }
+            }
+            catch { }
 
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (Directory.Exists(dataDir))
             foreach (var dlc in Directory.EnumerateDirectories(dataDir))
             {
                 string languagesDir = Path.Combine(dlc, "Languages");
@@ -35,9 +64,65 @@ namespace RimTrans.Core
                     ParsePairs(english, content, map);
                 }
             }
-            return map.Select(kv => new GlossaryEntry { En = kv.Key, Translation = kv.Value, Source = "官方" })
+            var result = map.Select(kv => new GlossaryEntry { En = kv.Key, Translation = kv.Value, Source = "官方" })
                 .OrderBy(x => x.En)
                 .ToList();
+
+            // 写缓存（失败不影响结果）
+            try
+            {
+                if (cacheFile != null && fingerprint != null)
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+                    var payload = new
+                    {
+                        fp = fingerprint,
+                        entries = result.Select(e => new { en = e.En, zh = e.Translation }),
+                    };
+                    File.WriteAllText(cacheFile, System.Text.Json.JsonSerializer.Serialize(payload));
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        /// <summary>Data 目录指纹：全部语言 tar/目录的大小+修改时间哈希。DLC 更新或换语言后自动失效。</summary>
+        private static string ComputeFingerprint(string dataDir, string language)
+        {
+            long hash = 17;
+            foreach (var dlc in Directory.EnumerateDirectories(dataDir).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
+            {
+                string languagesDir = Path.Combine(dlc, "Languages");
+                if (!Directory.Exists(languagesDir)) continue;
+                string? target = FindLanguageDir(languagesDir, language);
+                string? english = FindLanguageDir(languagesDir, "English");
+                foreach (var dir in new[] { target, english })
+                {
+                    if (dir == null) continue;
+                    hash = hash * 31 + dir.Length;
+                    if (dir.EndsWith(".tar", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (File.Exists(dir))
+                        {
+                            var fi = new FileInfo(dir);
+                            hash = hash * 31 + fi.Length;
+                            hash = hash * 31 + fi.LastWriteTimeUtc.Ticks;
+                        }
+                    }
+                    else
+                    {
+                        foreach (var f in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories)
+                                     .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+                        {
+                            var fi = new FileInfo(f);
+                            hash = hash * 31 + f.Length;
+                            hash = hash * 31 + fi.Length;
+                            hash = hash * 31 + fi.LastWriteTimeUtc.Ticks;
+                        }
+                    }
+                }
+            }
+            return $"{language}-{hash}";
         }
 
         private static string? FindLanguageDir(string languagesDir, string language)
