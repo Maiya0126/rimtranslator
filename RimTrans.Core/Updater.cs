@@ -15,7 +15,7 @@ namespace RimTrans.Core
     /// </summary>
     public static class Updater
     {
-        public const string CurrentVersion = "1.3.7";
+        public const string CurrentVersion = "1.3.6";
         private const string ReleaseApi = "https://api.github.com/repos/Maiya0126/rimtranslator/releases/latest";
         private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
