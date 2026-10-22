@@ -431,15 +431,30 @@ namespace RimTrans.App
                     var defResult = await Task.Run(() => DefInjectedGenerator.Generate(mod, options, defs, defExisting, logger));
                     Log($"  提取完成：Keyed {keyedResult.KeysTodo} 条 TODO，DefInjected {defResult.KeysTodo} 条 TODO");
 
-                    string languagesRoot = useSkeleton
-                        ? Path.Combine(outDir, SafeDirName(mod.Name), "Languages")
-                        : Path.Combine(mod.RootDir, "Languages");
-                    var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(languagesRoot, options.Language));
-                    if (items.Count > 0)
+                    // LoadFolders Mod 的 Languages 在版本子目录（如 1.6-7\Languages），逐一扫描全部内容目录
+                    int scanned = 0;
+                    if (useSkeleton)
                     {
+                        var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(
+                            Path.Combine(outDir, SafeDirName(mod.Name), "Languages"), options.Language));
                         foreach (var it in items) it.ModName = mod.Name;
                         allItems.AddRange(items);
-                        Log($"  待翻译 {items.Count} 条（累计 {allItems.Count}）");
+                        scanned = items.Count;
+                    }
+                    else
+                    {
+                        foreach (var contentDir in mod.GetContentDirs(options.GameVersion))
+                        {
+                            var items = await Task.Run(() => RimTrans.Core.AI.TodoScanner.Scan(
+                                Path.Combine(contentDir, "Languages"), options.Language));
+                            foreach (var it in items) it.ModName = mod.Name;
+                            allItems.AddRange(items);
+                            scanned += items.Count;
+                        }
+                    }
+                    if (scanned > 0)
+                    {
+                        Log($"  待翻译 {scanned} 条（累计 {allItems.Count}）");
                     }
                     else Log("  没有 TODO 条目，无需翻译。");
                 }
